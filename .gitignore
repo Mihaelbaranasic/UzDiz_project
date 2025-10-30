@@ -1,0 +1,8 @@
+=======
+/target/
+*.zip
+*.tar
+*.tar.gz
+*.jar
+/.metadata/
+>>>>>>> master
