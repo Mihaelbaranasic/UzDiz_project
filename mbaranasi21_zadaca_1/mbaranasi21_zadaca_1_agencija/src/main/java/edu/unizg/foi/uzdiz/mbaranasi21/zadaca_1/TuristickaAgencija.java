@@ -1,17 +1,16 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1;
 
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Aranzman;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Osoba;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Rezervacija;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.StanjeRezervacije;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.rezervacija.RezervacijaCreator;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.rezervacija.StandardniRezervacijaCreator;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Aranzman;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Osoba;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Rezervacija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.StanjeRezervacije;
 
 /**
  * Singleton klasa koja upravlja cijelim sustavom turističke agencije.
@@ -25,7 +24,6 @@ public class TuristickaAgencija {
     
     private Map<String, Aranzman> aranzmani;
     private Map<String, List<Rezervacija>> rezervacijePoAranzmanu;
-    private RezervacijaCreator rezervacijaCreator;
     
     /**
      * Privatni konstruktor - onemogućava direktno instanciranje.
@@ -33,7 +31,6 @@ public class TuristickaAgencija {
     private TuristickaAgencija() {
         this.aranzmani = new HashMap<>();
         this.rezervacijePoAranzmanu = new HashMap<>();
-        this.rezervacijaCreator = new StandardniRezervacijaCreator();
     }
     
     /**
@@ -99,7 +96,7 @@ public class TuristickaAgencija {
     }
     
     /**
-     * Kreira i dodaje novu rezervaciju koristeći Factory Method.
+     * Kreira i dodaje novu rezervaciju uz provjeru pravila.
      *
      * @param osoba Osoba koja rezervira
      * @param oznakaAranzmana Oznaka aranžmana
@@ -112,9 +109,32 @@ public class TuristickaAgencija {
             return false;
         }
         
-        Rezervacija rezervacija = rezervacijaCreator.kreirajRezervaciju(
-            osoba, oznakaAranzmana, datumVrijeme, StanjeRezervacije.PRIMLJENA
+        Aranzman noviAranzman = aranzmani.get(oznakaAranzmana);
+        
+        List<Rezervacija> rezervacijeNaAranzmanu = dohvatiRezervacije(oznakaAranzmana);
+        for (Rezervacija r : rezervacijeNaAranzmanu) {
+            if (r.getOsoba().getIme().equals(osoba.getIme()) && 
+                r.getOsoba().getPrezime().equals(osoba.getPrezime()) &&
+                r.jeAktivna()) {
+                return false;
+            }
+        }
+        
+        List<Rezervacija> osobneRezervacije = dohvatiRezervacijeOsobe(
+            osoba.getIme(), osoba.getPrezime()
         );
+        
+        for (Rezervacija r : osobneRezervacije) {
+            if (r.jeAktivna()) {
+                Aranzman postojeciAranzman = aranzmani.get(r.getOznakaAranzmana());
+                if (postojeciAranzman != null && noviAranzman.preklapa(postojeciAranzman)) {
+                    return false;
+                }
+            }
+        }
+        
+        Rezervacija rezervacija = new Rezervacija(osoba, oznakaAranzmana, 
+                datumVrijeme, StanjeRezervacije.PRIMLJENA);
         
         dodajRezervaciju(rezervacija);
         return true;
@@ -196,6 +216,7 @@ public class TuristickaAgencija {
     
     /**
      * Ažurira stanja svih rezervacija za aranžman prema pravilima.
+     * VAŽNO: Svaka osoba može imati samo 1 aktivnu rezervaciju po aranžmanu.
      *
      * @param oznakaAranzmana Oznaka aranžmana
      */
@@ -206,18 +227,32 @@ public class TuristickaAgencija {
         }
         
         List<Rezervacija> rezervacije = dohvatiRezervacije(oznakaAranzmana);
+        
         List<Rezervacija> aktivneIPrimljene = rezervacije.stream()
             .filter(r -> r.jeAktivna() || r.jePrimljena())
+            .sorted((r1, r2) -> r1.getDatumVrijemePrijema()
+                                  .compareTo(r2.getDatumVrijemePrijema()))
             .collect(Collectors.toList());
         
         int brojRezervacija = aktivneIPrimljene.size();
         
         if (brojRezervacija >= aranzman.getMinBrojPutnika()) {
-            for (int i = 0; i < aktivneIPrimljene.size(); i++) {
-                Rezervacija rez = aktivneIPrimljene.get(i);
+            Map<String, Boolean> osobaImaAktivu = new HashMap<>();
+            int brojDodijeljenih = 0;
+            
+            for (Rezervacija rez : aktivneIPrimljene) {
+                String kljucOsobe = rez.getOsoba().getIme() + 
+                                   "_" + rez.getOsoba().getPrezime();
                 
-                if (i < aranzman.getMaksBrojPutnika()) {
+                if (osobaImaAktivu.getOrDefault(kljucOsobe, false)) {
+                    rez.postaviStanje(StanjeRezervacije.NA_CEKANJU);
+                    continue;
+                }
+                
+                if (brojDodijeljenih < aranzman.getMaksBrojPutnika()) {
                     rez.postaviStanje(StanjeRezervacije.AKTIVNA);
+                    osobaImaAktivu.put(kljucOsobe, true);
+                    brojDodijeljenih++;
                 } else {
                     rez.postaviStanje(StanjeRezervacije.NA_CEKANJU);
                 }

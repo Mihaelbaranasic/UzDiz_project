@@ -13,7 +13,6 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.pomocne.DatumParse
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Aranzman;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Osoba;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Rezervacija;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.StanjeRezervacije;
 
 /**
  * Glavna klasa aplikacije za upravljanje turističkom agencijom.
@@ -22,7 +21,6 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.StanjeRezervacije;
 public class Agencija {
 
     public static void main(String[] args) {
-        ispisiZaglavlje();
         
         Map<String, String> argumenti = parsirajArgumente(args);
         
@@ -33,20 +31,10 @@ public class Agencija {
         
         String datotekaAranzmana = argumenti.get("--ta");
         String datotekaRezervacija = argumenti.get("--rta");
-        
-        ispisiDatoteke(datotekaAranzmana, datotekaRezervacija);
-        
+                
         ucitajPodatke(datotekaAranzmana, datotekaRezervacija);
         
         pokreniInteraktivniMod();
-    }
-
-    private static void ispisiZaglavlje() {
-        System.out.println("=========================================================");
-        System.out.println("  Turistička Agencija");
-        System.out.println("  Sustav za upravljanje rezervacijama");
-        System.out.println("=========================================================");
-        System.out.println();
     }
 
     private static Map<String, String> parsirajArgumente(String[] args) {
@@ -75,21 +63,12 @@ public class Agencija {
         return true;
     }
 
-    private static void ispisiDatoteke(String datotekaAranzmana, 
-                                       String datotekaRezervacija) {
-        System.out.println("Učitavanje podataka:");
-        System.out.println("  Aranžmani:    " + datotekaAranzmana);
-        System.out.println("  Rezervacije:  " + datotekaRezervacija);
-        System.out.println();
-    }
-
     private static void ucitajPodatke(String datotekaAranzmana, 
                                      String datotekaRezervacija) {
         TuristickaAgencija agencija = TuristickaAgencija.getInstance();
         
         CsvCitacAranzmana citacAranzmana = new CsvCitacAranzmana();
         List<Aranzman> aranzmani = citacAranzmana.ucitaj(datotekaAranzmana);
-        System.out.println("Učitano " + aranzmani.size() + " aranžmana.");
         
         for (Aranzman a : aranzmani) {
             agencija.dodajAranzman(a);
@@ -97,7 +76,6 @@ public class Agencija {
         
         CsvCitacRezervacija citacRezervacija = new CsvCitacRezervacija();
         List<Rezervacija> rezervacije = citacRezervacija.ucitaj(datotekaRezervacija);
-        System.out.println("Učitano " + rezervacije.size() + " rezervacija.");
         
         for (Rezervacija r : rezervacije) {
             agencija.dodajRezervaciju(r);
@@ -106,12 +84,7 @@ public class Agencija {
         System.out.println();
     }
 
-    private static void pokreniInteraktivniMod() {
-        System.out.println("=========================================================");
-        System.out.println("  INTERAKTIVNI NAČIN RADA");
-        System.out.println("=========================================================");
-        ispisiDostupneNaredbe();
-        
+    private static void pokreniInteraktivniMod() {        
         Scanner scanner = new Scanner(System.in);
         
         while (true) {
@@ -123,7 +96,6 @@ public class Agencija {
             }
             
             if (naredba.equalsIgnoreCase("Q")) {
-                System.out.println("\nIzlaz iz programa. Doviđenja!");
                 break;
             }
             
@@ -131,17 +103,6 @@ public class Agencija {
         }
         
         scanner.close();
-    }
-
-    private static void ispisiDostupneNaredbe() {
-        System.out.println("\nDostupne naredbe:");
-        System.out.println("  ITAK [od do]        - Ispiši tablicu aranžmana");
-        System.out.println("  ITAP oznaka         - Ispiši tablicu aranžmana za putovanje");
-        System.out.println("  IRTA oznaka [stanje] - Ispiši rezervacije za aranžman");
-        System.out.println("  IRO ime prezime     - Ispiši rezervacije osobe");
-        System.out.println("  ORTA ime prezime oznaka - Otkaži rezervaciju");
-        System.out.println("  DRTA ime prezime oznaka datum vrijeme - Dodaj rezervaciju");
-        System.out.println("  Q                   - Izlaz");
     }
 
     private static void obradiNaredbu(String naredba) {
@@ -169,7 +130,6 @@ public class Agencija {
                 break;
             default:
                 System.err.println("GREŠKA: Nepoznata naredba '" + komanda + "'!");
-                ispisiDostupneNaredbe();
         }
     }
 
@@ -177,7 +137,6 @@ public class Agencija {
         TuristickaAgencija agencija = TuristickaAgencija.getInstance();
         List<Aranzman> aranzmani = agencija.dohvatiSveAranzmane();
         
-        // Ako su zadani datumi, filtriraj
         if (dijelovi.length >= 3) {
             LocalDate od = DatumParser.parsirajDatum(dijelovi[1]);
             LocalDate do_ = DatumParser.parsirajDatum(dijelovi[2]);
@@ -192,25 +151,50 @@ public class Agencija {
                 .filter(a -> {
                     LocalDate pocetak = a.getPocetniDatum();
                     LocalDate kraj = a.getZavrsniDatum();
-                    // Aranžman se preklapa s rasponom ako:
-                    // početak aranžmana <= do AND kraj aranžmana >= od
                     return !pocetak.isAfter(do_) && !kraj.isBefore(od);
                 })
                 .collect(java.util.stream.Collectors.toList());
-            
-            System.out.println("\n=== ARANŽMANI " + od + " - " + do_ + " ===");
-        } else {
-            System.out.println("\n=== SVI ARANŽMANI ===");
         }
         
-        System.out.println("Ukupno: " + aranzmani.size());
-        System.out.println();
+        ispisiTablicuAranzmana(aranzmani);
+    }
+
+    private static void ispisiTablicuAranzmana(List<Aranzman> aranzmani) {
+        if (aranzmani.isEmpty()) {
+            System.out.println("Nema aranžmana za prikaz.");
+            return;
+        }
+        
+        System.out.printf("%-10s %-30s %-12s %-12s %-10s %-10s %-10s %-8s %-8s%n",
+            "Oznaka", "Naziv", "Početni", "Završni", "Kretanje", "Povratak", 
+            "Cijena", "Min", "Maks");
+        System.out.println(String.format("%0" + 120 + "d", 0).replace("0", "-"));
         
         for (Aranzman a : aranzmani) {
-            System.out.println(a.getOznaka() + " | " + a.getNaziv() + 
-                              " | " + a.getPocetniDatum() + " - " + 
-                              a.getZavrsniDatum());
+            String kretanje = a.getVrijemeKretanja() != null 
+                ? a.getVrijemeKretanja().toString() : "-";
+            String povratak = a.getVrijemePovratka() != null 
+                ? a.getVrijemePovratka().toString() : "-";
+            
+            System.out.printf("%-10s %-30s %-12s %-12s %-10s %-10s %-10.2f %-8d %-8d%n",
+                a.getOznaka(),
+                skratiTekst(a.getNaziv(), 30),
+                a.getPocetniDatum(),
+                a.getZavrsniDatum(),
+                kretanje,
+                povratak,
+                a.getCijena(),
+                a.getMinBrojPutnika(),
+                a.getMaksBrojPutnika()
+            );
         }
+    }
+
+    private static String skratiTekst(String tekst, int maxDuljina) {
+        if (tekst.length() <= maxDuljina) {
+            return tekst;
+        }
+        return tekst.substring(0, maxDuljina - 3) + "...";
     }
 
     private static void obradiITAP(String[] dijelovi) {
@@ -228,12 +212,26 @@ public class Agencija {
             return;
         }
         
-        System.out.println("\n=== DETALJI ARANŽMANA ===");
         System.out.println("Oznaka: " + a.getOznaka());
         System.out.println("Naziv: " + a.getNaziv());
-        System.out.println("Datum: " + a.getPocetniDatum() + " - " + a.getZavrsniDatum());
+        System.out.println("Program: " + (a.getProgram() != null ? a.getProgram() : "-"));
+        System.out.println("Početni datum: " + a.getPocetniDatum());
+        System.out.println("Završni datum: " + a.getZavrsniDatum());
+        System.out.println("Vrijeme kretanja: " + 
+            (a.getVrijemeKretanja() != null ? a.getVrijemeKretanja() : "-"));
+        System.out.println("Vrijeme povratka: " + 
+            (a.getVrijemePovratka() != null ? a.getVrijemePovratka() : "-"));
         System.out.println("Cijena: " + a.getCijena() + " EUR");
-        System.out.println("Putnici: " + a.getMinBrojPutnika() + " - " + a.getMaksBrojPutnika());
+        System.out.println("Min broj putnika: " + a.getMinBrojPutnika());
+        System.out.println("Maks broj putnika: " + a.getMaksBrojPutnika());
+        System.out.println("Broj noćenja: " + a.getBrojNocenja());
+        System.out.println("Doplata za jednokrevetnu sobu: " + 
+            (a.getDoplataZaJednokrevetnuSobu() != null 
+                ? a.getDoplataZaJednokrevetnuSobu() + " EUR" : "-"));
+        System.out.println("Prijevoz: " + (a.getPrijevoz() != null ? a.getPrijevoz() : "-"));
+        System.out.println("Broj doručka: " + a.getBrojDorucka());
+        System.out.println("Broj ručkova: " + a.getBrojRuckova());
+        System.out.println("Broj večera: " + a.getBrojVecera());
     }
 
     private static void obradiIRTA(String[] dijelovi) {
@@ -245,23 +243,70 @@ public class Agencija {
         String oznaka = dijelovi[1];
         TuristickaAgencija agencija = TuristickaAgencija.getInstance();
         List<Rezervacija> rezervacije;
+        boolean prikaziOtkaz = false;
         
         if (dijelovi.length >= 3) {
-            StanjeRezervacije stanje = StanjeRezervacije.fromOznaka(dijelovi[2]);
-            if (stanje == null) {
+            String filter = dijelovi[2].toUpperCase();
+            
+            if (filter.contains("PA")) {
+                rezervacije = agencija.dohvatiRezervacije(oznaka).stream()
+                    .filter(r -> r.jePrimljena() || r.jeAktivna())
+                    .collect(java.util.stream.Collectors.toList());
+            } else if (filter.contains("Č")) {
+                rezervacije = agencija.dohvatiRezervacije(oznaka).stream()
+                    .filter(r -> r.jeNaCekanju())
+                    .collect(java.util.stream.Collectors.toList());
+            } else if (filter.contains("O")) {
+                prikaziOtkaz = true;
+                rezervacije = agencija.dohvatiRezervacije(oznaka);
+            } else {
                 System.err.println("GREŠKA: Nepoznata oznaka stanja!");
                 return;
             }
-            rezervacije = agencija.dohvatiRezervacijePoStanju(oznaka, stanje);
         } else {
             rezervacije = agencija.dohvatiRezervacije(oznaka);
         }
         
-        System.out.println("\n=== REZERVACIJE ZA " + oznaka + " ===");
-        System.out.println("Ukupno: " + rezervacije.size());
+        ispisiTablicuRezervacija(rezervacije, prikaziOtkaz);
+    }
+
+    private static void ispisiTablicuRezervacija(List<Rezervacija> rezervacije, 
+                                                 boolean prikaziOtkaz) {
+        if (rezervacije.isEmpty()) {
+            System.out.println("Nema rezervacija za prikaz.");
+            return;
+        }
+        
+        if (prikaziOtkaz) {
+            System.out.printf("%-15s %-15s %-20s %-12s %-20s%n",
+                "Ime", "Prezime", "Datum i vrijeme", "Vrsta", "Datum otkaza");
+            System.out.println(String.format("%0" + 82 + "d", 0).replace("0", "-"));
+        } else {
+            System.out.printf("%-15s %-15s %-20s %-12s%n",
+                "Ime", "Prezime", "Datum i vrijeme", "Vrsta");
+            System.out.println(String.format("%0" + 62 + "d", 0).replace("0", "-"));
+        }
         
         for (Rezervacija r : rezervacije) {
-            System.out.println(r.getOsoba().getPunoIme() + " | " + r.getStanje());
+            if (prikaziOtkaz) {
+                String datumOtkaza = r.getDatumVrijemeOtkaza() != null 
+                    ? r.getDatumVrijemeOtkaza().toString() : "-";
+                
+                System.out.printf("%-15s %-15s %-20s %-12s %-20s%n",
+                    r.getOsoba().getIme(),
+                    r.getOsoba().getPrezime(),
+                    r.getDatumVrijemePrijema().toString(),
+                    r.getStanje().getOznaka(),
+                    datumOtkaza
+                );
+            } else {
+                System.out.printf("%-15s %-15s %-20s %-12s%n",
+                    r.getOsoba().getIme(),
+                    r.getOsoba().getPrezime(),
+                    r.getDatumVrijemePrijema().toString(),
+                    r.getStanje().getOznaka()
+                );
+            }
         }
     }
 
@@ -277,11 +322,25 @@ public class Agencija {
         TuristickaAgencija agencija = TuristickaAgencija.getInstance();
         List<Rezervacija> rezervacije = agencija.dohvatiRezervacijeOsobe(ime, prezime);
         
-        System.out.println("\n=== REZERVACIJE ZA " + ime + " " + prezime + " ===");
-        System.out.println("Ukupno: " + rezervacije.size());
+        if (rezervacije.isEmpty()) {
+            System.out.println("Nema rezervacija za osobu " + ime + " " + prezime + ".");
+            return;
+        }
+        
+        System.out.printf("%-20s %-10s %-30s %-12s%n",
+            "Datum i vrijeme", "Oznaka", "Naziv aranžmana", "Vrsta");
+        System.out.println(String.format("%0" + 72 + "d", 0).replace("0", "-"));
         
         for (Rezervacija r : rezervacije) {
-            System.out.println(r.getOznakaAranzmana() + " | " + r.getStanje());
+            Aranzman a = agencija.dohvatiAranzman(r.getOznakaAranzmana());
+            String naziv = a != null ? skratiTekst(a.getNaziv(), 30) : "-";
+            
+            System.out.printf("%-20s %-10s %-30s %-12s%n",
+            	r.getDatumVrijemePrijema().toString(),
+                r.getOznakaAranzmana(),
+                naziv,
+                r.getStanje().getOznaka()
+            );
         }
     }
 
