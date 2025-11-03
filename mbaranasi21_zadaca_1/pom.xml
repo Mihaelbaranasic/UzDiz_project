@@ -31,5 +31,6 @@
 		<module>mbaranasi21_zadaca_1_agencija</module>
 		<module>mbaranasi21_zadaca_1_model</module>
 		<module>mbaranasi21_zadaca_1_konfiguracija</module>
+		<module>mbaranasi21_zadaca_1_rezervacija</module>
 	</modules>
 </project>

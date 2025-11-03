@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 /**
- * Pomoćna klasa za parsiranje datuma i vremena.
+ * Pomoćna klasa za parsiranje i formatiranje datuma i vremena.
  */
 public class DatumParser {
     
@@ -99,5 +99,45 @@ public class DatumParser {
                 return null;
             }
         }
+    }
+    
+    
+    /**
+     * Formatira datum u hrvatski format sa točkom.
+     *
+     * @param datum Datum za formatiranje
+     * @return Formatirani datum (npr. "10.11.2025.")
+     */
+    public static String formatirajDatum(LocalDate datum) {
+        if (datum == null) {
+            return "-";
+        }
+        return datum.format(FORMATTER_DATUM_SA_TOCKOM);
+    }
+    
+    /**
+     * Formatira vrijeme u hrvatski format.
+     *
+     * @param vrijeme Vrijeme za formatiranje
+     * @return Formatirano vrijeme (npr. "15:30:00")
+     */
+    public static String formatirajVrijeme(LocalTime vrijeme) {
+        if (vrijeme == null) {
+            return "-";
+        }
+        return vrijeme.format(FORMATTER_VRIJEME_SA_SEKUNDAMA);
+    }
+    
+    /**
+     * Formatira datum i vrijeme u hrvatski format.
+     *
+     * @param datumVrijeme Datum i vrijeme za formatiranje
+     * @return Formatirani datum i vrijeme (npr. "10.11.2025. 15:30:00")
+     */
+    public static String formatirajDatumVrijeme(LocalDateTime datumVrijeme) {
+        if (datumVrijeme == null) {
+            return "-";
+        }
+        return datumVrijeme.format(FORMATTER_DATUM_VRIJEME_SA_TOCKOM);
     }
 }

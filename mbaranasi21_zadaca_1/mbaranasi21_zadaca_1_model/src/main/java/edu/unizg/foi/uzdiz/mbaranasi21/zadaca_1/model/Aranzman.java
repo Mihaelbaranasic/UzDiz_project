@@ -5,9 +5,6 @@ import java.time.LocalTime;
 
 /**
  * Predstavlja turistički aranžman sa svim podacima.
- * 
- * <p>Koristi Builder uzorak za kreiranje zbog velikog broja atributa
- * od kojih su mnogi opcionalni.</p>
  */
 public class Aranzman {
     
@@ -29,27 +26,48 @@ public class Aranzman {
     private final int brojVecera;
     
     /**
-     * Privatni konstruktor - koristi se samo iz Buildera.
+     * Package-private konstruktor - poziva se samo iz AranzmanBuilder-a.
      *
-     * @param builder Builder koji sadrži sve podatke
+     * @param oznaka Oznaka aranžmana
+     * @param naziv Naziv aranžmana
+     * @param program Program aranžmana
+     * @param pocetniDatum Početni datum
+     * @param zavrsniDatum Završni datum
+     * @param vrijemeKretanja Vrijeme kretanja
+     * @param vrijemePovratka Vrijeme povratka
+     * @param cijena Cijena
+     * @param minBrojPutnika Min broj putnika
+     * @param maksBrojPutnika Max broj putnika
+     * @param brojNocenja Broj noćenja
+     * @param doplataZaJednokrevetnuSobu Doplata za jednokrevetnu sobu
+     * @param prijevoz Vrsta prijevoza
+     * @param brojDorucka Broj doručka
+     * @param brojRuckova Broj ručkova
+     * @param brojVecera Broj večera
      */
-    private Aranzman(Builder builder) {
-        this.oznaka = builder.oznaka;
-        this.naziv = builder.naziv;
-        this.program = builder.program;
-        this.pocetniDatum = builder.pocetniDatum;
-        this.zavrsniDatum = builder.zavrsniDatum;
-        this.vrijemeKretanja = builder.vrijemeKretanja;
-        this.vrijemePovratka = builder.vrijemePovratka;
-        this.cijena = builder.cijena;
-        this.minBrojPutnika = builder.minBrojPutnika;
-        this.maksBrojPutnika = builder.maksBrojPutnika;
-        this.brojNocenja = builder.brojNocenja;
-        this.doplataZaJednokrevetnuSobu = builder.doplataZaJednokrevetnuSobu;
-        this.prijevoz = builder.prijevoz;
-        this.brojDorucka = builder.brojDorucka;
-        this.brojRuckova = builder.brojRuckova;
-        this.brojVecera = builder.brojVecera;
+    Aranzman(String oznaka, String naziv, String program,
+            LocalDate pocetniDatum, LocalDate zavrsniDatum,
+            LocalTime vrijemeKretanja, LocalTime vrijemePovratka,
+            double cijena, int minBrojPutnika, int maksBrojPutnika,
+            int brojNocenja, Double doplataZaJednokrevetnuSobu,
+            String prijevoz, int brojDorucka, int brojRuckova, 
+            int brojVecera) {
+        this.oznaka = oznaka;
+        this.naziv = naziv;
+        this.program = program;
+        this.pocetniDatum = pocetniDatum;
+        this.zavrsniDatum = zavrsniDatum;
+        this.vrijemeKretanja = vrijemeKretanja;
+        this.vrijemePovratka = vrijemePovratka;
+        this.cijena = cijena;
+        this.minBrojPutnika = minBrojPutnika;
+        this.maksBrojPutnika = maksBrojPutnika;
+        this.brojNocenja = brojNocenja;
+        this.doplataZaJednokrevetnuSobu = doplataZaJednokrevetnuSobu;
+        this.prijevoz = prijevoz;
+        this.brojDorucka = brojDorucka;
+        this.brojRuckova = brojRuckova;
+        this.brojVecera = brojVecera;
     }
     
     public String getOznaka() {
@@ -117,122 +135,18 @@ public class Aranzman {
     }
     
     /**
-     * Provjerava preklapaju li se datumi ovog aranžmana s drugim.
+     * Provjerava preklapa li se ovaj aranžman s drugim aranžmanom.
      *
      * @param drugi Drugi aranžman za provjeru
-     * @return true ako se preklapaju, inače false
+     * @return true ako se aranžmani preklapaju, inače false
      */
     public boolean preklapa(Aranzman drugi) {
-        return !this.zavrsniDatum.isBefore(drugi.pocetniDatum) 
-            && !this.pocetniDatum.isAfter(drugi.zavrsniDatum);
+        return !this.pocetniDatum.isAfter(drugi.zavrsniDatum) &&
+               !this.zavrsniDatum.isBefore(drugi.pocetniDatum);
     }
     
     @Override
     public String toString() {
         return oznaka + " - " + naziv;
-    }
-    
-    /**
-     * Builder klasa za postupno kreiranje Aranzmana.
-     * 
-     * <p>BUILDER UZORAK - omogućava fleksibilno kreiranje objekta
-     * sa mnogo atributa od kojih su neki opcionalni.</p>
-     */
-    public static class Builder {
-        
-        private final String oznaka;
-        private final String naziv;
-        private final LocalDate pocetniDatum;
-        private final LocalDate zavrsniDatum;
-        private final double cijena;
-        private final int minBrojPutnika;
-        private final int maksBrojPutnika;
-        
-        private String program = "";
-        private LocalTime vrijemeKretanja = null;
-        private LocalTime vrijemePovratka = null;
-        private int brojNocenja = 0;
-        private Double doplataZaJednokrevetnuSobu = null;
-        private String prijevoz = "";
-        private int brojDorucka = 0;
-        private int brojRuckova = 0;
-        private int brojVecera = 0;
-        
-        /**
-         * Konstruktor sa obaveznim parametrima.
-         *
-         * @param oznaka Jedinstvena oznaka aranžmana
-         * @param naziv Naziv aranžmana
-         * @param pocetniDatum Datum početka
-         * @param zavrsniDatum Datum završetka
-         * @param cijena Cijena aranžmana
-         * @param minBrojPutnika Minimalan broj putnika
-         * @param maksBrojPutnika Maksimalan broj putnika
-         */
-        public Builder(String oznaka, String naziv, LocalDate pocetniDatum, 
-                      LocalDate zavrsniDatum, double cijena, 
-                      int minBrojPutnika, int maksBrojPutnika) {
-            this.oznaka = oznaka;
-            this.naziv = naziv;
-            this.pocetniDatum = pocetniDatum;
-            this.zavrsniDatum = zavrsniDatum;
-            this.cijena = cijena;
-            this.minBrojPutnika = minBrojPutnika;
-            this.maksBrojPutnika = maksBrojPutnika;
-        }
-        
-        public Builder program(String program) {
-            this.program = program;
-            return this;
-        }
-        
-        public Builder vrijemeKretanja(LocalTime vrijeme) {
-            this.vrijemeKretanja = vrijeme;
-            return this;
-        }
-        
-        public Builder vrijemePovratka(LocalTime vrijeme) {
-            this.vrijemePovratka = vrijeme;
-            return this;
-        }
-        
-        public Builder brojNocenja(int broj) {
-            this.brojNocenja = broj;
-            return this;
-        }
-        
-        public Builder doplataZaJednokrevetnuSobu(Double doplata) {
-            this.doplataZaJednokrevetnuSobu = doplata;
-            return this;
-        }
-        
-        public Builder prijevoz(String prijevoz) {
-            this.prijevoz = prijevoz;
-            return this;
-        }
-        
-        public Builder brojDorucka(int broj) {
-            this.brojDorucka = broj;
-            return this;
-        }
-        
-        public Builder brojRuckova(int broj) {
-            this.brojRuckova = broj;
-            return this;
-        }
-        
-        public Builder brojVecera(int broj) {
-            this.brojVecera = broj;
-            return this;
-        }
-        
-        /**
-         * Kreira konačni objekt Aranzman.
-         *
-         * @return Novi aranžman sa postavljenim atributima
-         */
-        public Aranzman build() {
-            return new Aranzman(this);
-        }
     }
 }

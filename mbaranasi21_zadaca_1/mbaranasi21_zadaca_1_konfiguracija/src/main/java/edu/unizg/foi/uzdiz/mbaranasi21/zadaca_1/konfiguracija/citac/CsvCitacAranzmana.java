@@ -1,7 +1,5 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.citac;
 
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.pomocne.DatumParser;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Aranzman;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -10,6 +8,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.pomocne.DatumParser;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Aranzman;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.AranzmanBuilder;  // ← DODAJ
 
 /**
  * Čitač CSV datoteke s turističkim aranžmanima.
@@ -77,10 +79,14 @@ public class CsvCitacAranzmana {
             String oznaka = dohvatiVrijednost(dijelovi, 0);
             String naziv = dohvatiVrijednost(dijelovi, 1);
             String program = dohvatiVrijednost(dijelovi, 2);
-            LocalDate pocetniDatum = DatumParser.parsirajDatum(dohvatiVrijednost(dijelovi, 3));
-            LocalDate zavrsniDatum = DatumParser.parsirajDatum(dohvatiVrijednost(dijelovi, 4));
-            LocalTime vrijemeKretanja = DatumParser.parsirajVrijeme(dohvatiVrijednost(dijelovi, 5));
-            LocalTime vrijemePovratka = DatumParser.parsirajVrijeme(dohvatiVrijednost(dijelovi, 6));
+            LocalDate pocetniDatum = DatumParser.parsirajDatum(
+                dohvatiVrijednost(dijelovi, 3));
+            LocalDate zavrsniDatum = DatumParser.parsirajDatum(
+                dohvatiVrijednost(dijelovi, 4));
+            LocalTime vrijemeKretanja = DatumParser.parsirajVrijeme(
+                dohvatiVrijednost(dijelovi, 5));
+            LocalTime vrijemePovratka = DatumParser.parsirajVrijeme(
+                dohvatiVrijednost(dijelovi, 6));
             Double cijena = parsirajDouble(dohvatiVrijednost(dijelovi, 7));
             Integer minBrojPutnika = parsirajInteger(dohvatiVrijednost(dijelovi, 8));
             Integer maksBrojPutnika = parsirajInteger(dohvatiVrijednost(dijelovi, 9));
@@ -92,7 +98,7 @@ public class CsvCitacAranzmana {
                 return null;
             }
             
-            Aranzman.Builder builder = new Aranzman.Builder(
+            AranzmanBuilder builder = new AranzmanBuilder(
                 oznaka, naziv, pocetniDatum, zavrsniDatum, cijena, 
                 minBrojPutnika, maksBrojPutnika
             );
