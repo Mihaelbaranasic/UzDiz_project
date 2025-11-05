@@ -11,17 +11,20 @@ import java.util.List;
 
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.pomocne.DatumParser;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Aranzman;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.AranzmanBuilder;  // ← DODAJ
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.AranzmanBuilder;
 
 /**
  * Čitač CSV datoteke s turističkim aranžmanima.
+ * Učitava podatke o aranžmanima iz CSV formata i kreira objekte korištenjem AranzmanBuilder uzorka.
  */
 public class CsvCitacAranzmana {
     
     /**
      * Učitava aranžmane iz CSV datoteke.
+     * Preskače zaglavlje (prvi redak) i prazne retke.
+     * Retke koji počinju sa '#' tretira kao komentare i preskače ih.
      *
-     * @param putanja Putanja do CSV datoteke
+     * @param putanja Putanja do CSV datoteke s aranžmanima
      * @return Lista uspješno učitanih aranžmana
      */
     public List<Aranzman> ucitaj(String putanja) {
@@ -61,10 +64,11 @@ public class CsvCitacAranzmana {
     
     /**
      * Parsira jedan redak CSV datoteke u aranžman.
+     * Redak mora sadržavati minimalno 10 obaveznih atributa.
      *
-     * @param linija Linija za parsiranje
-     * @param redniBroj Redni broj linije
-     * @return Aranzman ili null ako parsiranje nije uspjelo
+     * @param linija Linija CSV datoteke za parsiranje
+     * @param redniBroj Redni broj linije (za ispis grešaka)
+     * @return Aranzman objekt ili null ako parsiranje nije uspjelo
      */
     private Aranzman parsirajRedak(String linija, int redniBroj) {
         try {
@@ -76,66 +80,12 @@ public class CsvCitacAranzmana {
                 return null;
             }
             
-            String oznaka = dohvatiVrijednost(dijelovi, 0);
-            String naziv = dohvatiVrijednost(dijelovi, 1);
-            String program = dohvatiVrijednost(dijelovi, 2);
-            LocalDate pocetniDatum = DatumParser.parsirajDatum(
-                dohvatiVrijednost(dijelovi, 3));
-            LocalDate zavrsniDatum = DatumParser.parsirajDatum(
-                dohvatiVrijednost(dijelovi, 4));
-            LocalTime vrijemeKretanja = DatumParser.parsirajVrijeme(
-                dohvatiVrijednost(dijelovi, 5));
-            LocalTime vrijemePovratka = DatumParser.parsirajVrijeme(
-                dohvatiVrijednost(dijelovi, 6));
-            Double cijena = parsirajDouble(dohvatiVrijednost(dijelovi, 7));
-            Integer minBrojPutnika = parsirajInteger(dohvatiVrijednost(dijelovi, 8));
-            Integer maksBrojPutnika = parsirajInteger(dohvatiVrijednost(dijelovi, 9));
-            
-            if (oznaka == null || naziv == null || pocetniDatum == null 
-                || zavrsniDatum == null || cijena == null 
-                || minBrojPutnika == null || maksBrojPutnika == null) {
-                ispisiGresku(redniBroj, linija, "Neispravan format obaveznih atributa");
+            AranzmanBuilder builder = parsirajObavezneAtribute(dijelovi, redniBroj, linija);
+            if (builder == null) {
                 return null;
             }
             
-            AranzmanBuilder builder = new AranzmanBuilder(
-                oznaka, naziv, pocetniDatum, zavrsniDatum, cijena, 
-                minBrojPutnika, maksBrojPutnika
-            );
-            
-            if (program != null) builder.program(program);
-            if (vrijemeKretanja != null) builder.vrijemeKretanja(vrijemeKretanja);
-            if (vrijemePovratka != null) builder.vrijemePovratka(vrijemePovratka);
-            
-            if (dijelovi.length > 10) {
-                Integer brojNocenja = parsirajInteger(dohvatiVrijednost(dijelovi, 10));
-                if (brojNocenja != null) builder.brojNocenja(brojNocenja);
-            }
-            
-            if (dijelovi.length > 11) {
-                Double doplata = parsirajDouble(dohvatiVrijednost(dijelovi, 11));
-                if (doplata != null) builder.doplataZaJednokrevetnuSobu(doplata);
-            }
-            
-            if (dijelovi.length > 12) {
-                String prijevoz = dohvatiVrijednost(dijelovi, 12);
-                if (prijevoz != null) builder.prijevoz(prijevoz);
-            }
-            
-            if (dijelovi.length > 13) {
-                Integer brojDorucka = parsirajInteger(dohvatiVrijednost(dijelovi, 13));
-                if (brojDorucka != null) builder.brojDorucka(brojDorucka);
-            }
-            
-            if (dijelovi.length > 14) {
-                Integer brojRuckova = parsirajInteger(dohvatiVrijednost(dijelovi, 14));
-                if (brojRuckova != null) builder.brojRuckova(brojRuckova);
-            }
-            
-            if (dijelovi.length > 15) {
-                Integer brojVecera = parsirajInteger(dohvatiVrijednost(dijelovi, 15));
-                if (brojVecera != null) builder.brojVecera(brojVecera);
-            }
+            parsirajOpcionalneAtribute(builder, dijelovi);
             
             return builder.build();
             
@@ -146,10 +96,116 @@ public class CsvCitacAranzmana {
     }
     
     /**
-     * Parsira CSV liniju u dijelove.
+     * Parsira obavezne atribute aranžmana i kreira AranzmanBuilder.
+     * Obavezni atributi: oznaka, naziv, početni datum, završni datum, cijena,
+     * minimalni broj putnika, maksimalni broj putnika.
      *
-     * @param linija CSV linija
-     * @return Polje vrijednosti
+     * @param dijelovi Polje parsiranih vrijednosti iz CSV retka
+     * @param redniBroj Redni broj retka (za ispis grešaka)
+     * @param linija Originalna linija (za ispis grešaka)
+     * @return AranzmanBuilder objekt s obaveznim atributima ili null ako parsiranje nije uspjelo
+     */
+    private AranzmanBuilder parsirajObavezneAtribute(String[] dijelovi, 
+                                                     int redniBroj, 
+                                                     String linija) {
+        String oznaka = dohvatiVrijednost(dijelovi, 0);
+        String naziv = dohvatiVrijednost(dijelovi, 1);
+        String program = dohvatiVrijednost(dijelovi, 2);
+        LocalDate pocetniDatum = DatumParser.parsirajDatum(
+            dohvatiVrijednost(dijelovi, 3));
+        LocalDate zavrsniDatum = DatumParser.parsirajDatum(
+            dohvatiVrijednost(dijelovi, 4));
+        LocalTime vrijemeKretanja = DatumParser.parsirajVrijeme(
+            dohvatiVrijednost(dijelovi, 5));
+        LocalTime vrijemePovratka = DatumParser.parsirajVrijeme(
+            dohvatiVrijednost(dijelovi, 6));
+        Double cijena = parsirajDouble(dohvatiVrijednost(dijelovi, 7));
+        Integer minBrojPutnika = parsirajInteger(dohvatiVrijednost(dijelovi, 8));
+        Integer maksBrojPutnika = parsirajInteger(dohvatiVrijednost(dijelovi, 9));
+        
+        if (oznaka == null || naziv == null || pocetniDatum == null 
+            || zavrsniDatum == null || cijena == null 
+            || minBrojPutnika == null || maksBrojPutnika == null) {
+            ispisiGresku(redniBroj, linija, "Neispravan format obaveznih atributa");
+            return null;
+        }
+        
+        AranzmanBuilder builder = new AranzmanBuilder(
+            oznaka, naziv, pocetniDatum, zavrsniDatum, cijena, 
+            minBrojPutnika, maksBrojPutnika
+        );
+        
+        if (program != null) {
+            builder.program(program);
+        }
+        if (vrijemeKretanja != null) {
+            builder.vrijemeKretanja(vrijemeKretanja);
+        }
+        if (vrijemePovratka != null) {
+            builder.vrijemePovratka(vrijemePovratka);
+        }
+        
+        return builder;
+    }
+    
+    /**
+     * Parsira opcionalne atribute aranžmana i dodaje ih u builder.
+     * Opcionalni atributi: broj noćenja, doplata za jednokrevetnu sobu, prijevoz,
+     * broj doručaka, broj ručkova, broj večera.
+     *
+     * @param builder AranzmanBuilder u koji se dodaju opcionalni atributi
+     * @param dijelovi Polje parsiranih vrijednosti iz CSV retka
+     */
+    private void parsirajOpcionalneAtribute(AranzmanBuilder builder, String[] dijelovi) {
+        if (dijelovi.length > 10) {
+            Integer brojNocenja = parsirajInteger(dohvatiVrijednost(dijelovi, 10));
+            if (brojNocenja != null) {
+                builder.brojNocenja(brojNocenja);
+            }
+        }
+        
+        if (dijelovi.length > 11) {
+            Double doplata = parsirajDouble(dohvatiVrijednost(dijelovi, 11));
+            if (doplata != null) {
+                builder.doplataZaJednokrevetnuSobu(doplata);
+            }
+        }
+        
+        if (dijelovi.length > 12) {
+            String prijevoz = dohvatiVrijednost(dijelovi, 12);
+            if (prijevoz != null) {
+                builder.prijevoz(prijevoz);
+            }
+        }
+        
+        if (dijelovi.length > 13) {
+            Integer brojDorucka = parsirajInteger(dohvatiVrijednost(dijelovi, 13));
+            if (brojDorucka != null) {
+                builder.brojDorucka(brojDorucka);
+            }
+        }
+        
+        if (dijelovi.length > 14) {
+            Integer brojRuckova = parsirajInteger(dohvatiVrijednost(dijelovi, 14));
+            if (brojRuckova != null) {
+                builder.brojRuckova(brojRuckova);
+            }
+        }
+        
+        if (dijelovi.length > 15) {
+            Integer brojVecera = parsirajInteger(dohvatiVrijednost(dijelovi, 15));
+            if (brojVecera != null) {
+                builder.brojVecera(brojVecera);
+            }
+        }
+    }
+    
+    /**
+     * Parsira CSV liniju u polje vrijednosti.
+     * Podržava vrijednosti u navodnicima koje mogu sadržavati zareze.
+     *
+     * @param linija CSV linija za parsiranje
+     * @return Polje parsiranih vrijednosti
      */
     private String[] parsirajCsv(String linija) {
         List<String> rezultat = new ArrayList<>();
@@ -173,14 +229,32 @@ public class CsvCitacAranzmana {
         return rezultat.toArray(new String[0]);
     }
     
+    /**
+     * Dohvaća vrijednost s određenog indeksa u polju.
+     * Uklanja bijele znakove s početka i kraja te vraća null za prazne stringove.
+     *
+     * @param dijelovi Polje vrijednosti
+     * @param index Indeks željene vrijednosti
+     * @return Vrijednost ili null ako je indeks izvan granica ili je vrijednost prazna
+     */
     private String dohvatiVrijednost(String[] dijelovi, int index) {
-        if (index >= dijelovi.length) return null;
+        if (index >= dijelovi.length) {
+            return null;
+        }
         String vrijednost = dijelovi[index].trim();
         return vrijednost.isEmpty() ? null : vrijednost;
     }
     
+    /**
+     * Parsira tekstualnu vrijednost u Integer.
+     *
+     * @param tekst Tekstualna reprezentacija broja
+     * @return Integer vrijednost ili null ako parsiranje nije uspjelo
+     */
     private Integer parsirajInteger(String tekst) {
-        if (tekst == null) return null;
+        if (tekst == null) {
+            return null;
+        }
         try {
             return Integer.parseInt(tekst);
         } catch (NumberFormatException e) {
@@ -188,8 +262,16 @@ public class CsvCitacAranzmana {
         }
     }
     
+    /**
+     * Parsira tekstualnu vrijednost u Double.
+     *
+     * @param tekst Tekstualna reprezentacija decimalnog broja
+     * @return Double vrijednost ili null ako parsiranje nije uspjelo
+     */
     private Double parsirajDouble(String tekst) {
-        if (tekst == null) return null;
+        if (tekst == null) {
+            return null;
+        }
         try {
             return Double.parseDouble(tekst);
         } catch (NumberFormatException e) {
@@ -197,6 +279,13 @@ public class CsvCitacAranzmana {
         }
     }
     
+    /**
+     * Ispisuje poruku o grešci prilikom parsiranja retka.
+     *
+     * @param redniBroj Redni broj retka u kojem je došlo do greške
+     * @param sadrzaj Sadržaj retka koji je uzrokovao grešku
+     * @param opis Opis greške
+     */
     private void ispisiGresku(int redniBroj, String sadrzaj, String opis) {
         System.err.println("GREŠKA u retku " + redniBroj + ": " + opis);
         System.err.println("  Sadržaj: " + sadrzaj);

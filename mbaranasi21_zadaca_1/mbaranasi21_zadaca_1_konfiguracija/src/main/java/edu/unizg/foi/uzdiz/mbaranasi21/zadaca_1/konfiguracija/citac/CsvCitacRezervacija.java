@@ -21,6 +21,9 @@ public class CsvCitacRezervacija {
     
     private final RezervacijaCreator creator;
     
+    /**
+     * Konstruktor.
+     */
     public CsvCitacRezervacija() {
         this.creator = new StandardniRezervacijaCreator();
     }
@@ -105,6 +108,13 @@ public class CsvCitacRezervacija {
         }
     }
     
+    /**
+     * Ispisuje grešku kod čitanja sadržaja datoteke.
+     *
+     * @param redniBroj Redni broj
+     * @param sadrzaj Sadržaj
+     * @param opis Opis
+     */
     private void ispisiGresku(int redniBroj, String sadrzaj, String opis) {
         System.err.println("GREŠKA u retku " + redniBroj + ": " + opis);
         System.err.println("  Sadržaj: " + sadrzaj);

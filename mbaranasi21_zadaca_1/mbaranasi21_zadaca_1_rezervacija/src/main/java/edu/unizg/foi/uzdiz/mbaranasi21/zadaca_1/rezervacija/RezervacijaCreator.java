@@ -7,7 +7,7 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Rezervacija;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.StanjeRezervacije;
 
 /**
- * Apstraktni kreator rezervacija.
+ * Apstraktni kreator rezervacija (Factory method).
  */
 public abstract class RezervacijaCreator {
     

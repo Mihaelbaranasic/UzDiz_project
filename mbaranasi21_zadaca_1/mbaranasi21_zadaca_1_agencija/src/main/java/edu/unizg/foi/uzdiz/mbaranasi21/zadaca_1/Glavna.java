@@ -2,6 +2,7 @@ package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,392 +11,485 @@ import java.util.Scanner;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.citac.CsvCitacAranzmana;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.citac.CsvCitacRezervacija;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.pomocne.DatumParser;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.tvornica.CsvTvornicaCitaca;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.tvornica.TvornicaCitaca;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Aranzman;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Osoba;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Rezervacija;
 
 /**
- * Glavna klasa aplikacije za upravljanje turističkom agencijom.
- * Entry point programa - parsira argumente i pokreće sustav.
+ * Glavna klasa aplikacije za upravljanje turističkom agencijom. Entry point
+ * programa - parsira argumente i pokreće sustav.
  */
 public class Glavna {
 
-    public static void main(String[] args) {
-        Map<String, String> argumenti = parsirajArgumente(args);
+	/**
+	 * Ulazna točka programa. Parsira argumente komandne linije, učitava podatke i
+	 * pokreće interaktivni mod.
+	 *
+	 * @param args Argumenti komandne linije (--ta putanja --rta putanja)
+	 */
+	public static void main(String[] args) {
+		Map<String, String> argumenti = parsirajArgumente(args);
 
-        if (!provjeriArgumente(argumenti)) {
-            System.exit(1);
-        }
+		if (!provjeriArgumente(argumenti)) {
+			System.exit(1);
+		}
 
-        String datotekaAranzmana = argumenti.get("--ta");
-        String datotekaRezervacija = argumenti.get("--rta");
+		String datotekaAranzmana = argumenti.get("--ta");
+		String datotekaRezervacija = argumenti.get("--rta");
 
-        ucitajPodatke(datotekaAranzmana, datotekaRezervacija);
-        pokreniInteraktivniMod();
-    }
+		ucitajPodatke(datotekaAranzmana, datotekaRezervacija);
+		pokreniInteraktivniMod();
+	}
 
-    private static Map<String, String> parsirajArgumente(String[] args) {
-        Map<String, String> mapa = new HashMap<>();
+	/**
+	 * Parsira argumente komandne linije i vraća ih u obliku mape. Očekivani format:
+	 * --naziv vrijednost
+	 *
+	 * @param args Argumenti komandne linije
+	 * @return Mapa argumenta (ključ = --naziv, vrijednost = vrijednost)
+	 */
+	private static Map<String, String> parsirajArgumente(String[] args) {
+		Map<String, String> mapa = new HashMap<>();
 
-        for (int i = 0; i < args.length - 1; i++) {
-            if (args[i].startsWith("--")) {
-                mapa.put(args[i], args[i + 1]);
-            }
-        }
+		for (int i = 0; i < args.length - 1; i++) {
+			if (args[i].startsWith("--")) {
+				mapa.put(args[i], args[i + 1]);
+			}
+		}
 
-        return mapa;
-    }
+		return mapa;
+	}
 
-    private static boolean provjeriArgumente(Map<String, String> argumenti) {
-        if (!argumenti.containsKey("--ta")) {
-            System.err.println("GREŠKA: Nedostaje --ta (aranžmani)!");
-            return false;
-        }
+	/**
+	 * Provjerava jesu li svi potrebni argumenti prisutni. Potrebni argumenti: --ta
+	 * (aranžmani) i --rta (rezervacije).
+	 *
+	 * @param argumenti Mapa parsiranih argumenata
+	 * @return true ako su svi argumenti prisutni, false inače
+	 */
+	private static boolean provjeriArgumente(Map<String, String> argumenti) {
+		if (!argumenti.containsKey("--ta")) {
+			System.err.println("GREŠKA: Nedostaje --ta (aranžmani)!");
+			return false;
+		}
 
-        if (!argumenti.containsKey("--rta")) {
-            System.err.println("GREŠKA: Nedostaje --rta (rezervacije)!");
-            return false;
-        }
+		if (!argumenti.containsKey("--rta")) {
+			System.err.println("GREŠKA: Nedostaje --rta (rezervacije)!");
+			return false;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    /**
-     * Učitava podatke iz CSV datoteka koristeći Abstract Factory uzorak.
-     *
-     * @param datotekaAranzmana   Putanja do CSV datoteke s aranžmanima
-     * @param datotekaRezervacija Putanja do CSV datoteke s rezervacijama
-     */
-    private static void ucitajPodatke(String datotekaAranzmana, String datotekaRezervacija) {
-        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+	/**
+	 * Učitava podatke iz CSV datoteka i pohranjuje ih u turističku agenciju.
+	 * Koristi čitače za aranžmane i rezervacije.
+	 *
+	 * @param datotekaAranzmana   Putanja do CSV datoteke s aranžmanima
+	 * @param datotekaRezervacija Putanja do CSV datoteke s rezervacijama
+	 */
+	private static void ucitajPodatke(String datotekaAranzmana, String datotekaRezervacija) {
+		TuristickaAgencija agencija = TuristickaAgencija.getInstance();
 
-        TvornicaCitaca factory = new CsvTvornicaCitaca();
+		CsvCitacAranzmana citacAranzmana = new CsvCitacAranzmana();
+		CsvCitacRezervacija citacRezervacija = new CsvCitacRezervacija();
 
-        CsvCitacAranzmana citacAranzmana = factory.createCitacAranzmana();
-        CsvCitacRezervacija citacRezervacija = factory.createCitacRezervacija();
+		List<Aranzman> aranzmani = citacAranzmana.ucitaj(datotekaAranzmana);
 
-        List<Aranzman> aranzmani = citacAranzmana.ucitaj(datotekaAranzmana);
+		for (Aranzman a : aranzmani) {
+			agencija.dodajAranzman(a);
+		}
 
-        for (Aranzman a : aranzmani) {
-            agencija.dodajAranzman(a);
-        }
+		List<Rezervacija> rezervacije = citacRezervacija.ucitaj(datotekaRezervacija);
 
-        List<Rezervacija> rezervacije = citacRezervacija.ucitaj(datotekaRezervacija);
+		for (Rezervacija r : rezervacije) {
+			agencija.dodajRezervaciju(r);
+		}
+	}
 
-        for (Rezervacija r : rezervacije) {
-            agencija.dodajRezervaciju(r);
-        }
-    }
+	/**
+	 * Pokreće interaktivni mod programa. Čita korisničke naredbe sa standardnog
+	 * ulaza i obrađuje ih sve dok korisnik ne unese 'Q' za izlaz.
+	 */
+	private static void pokreniInteraktivniMod() {
+		Scanner scanner = new Scanner(System.in);
 
-    private static void pokreniInteraktivniMod() {
-        Scanner scanner = new Scanner(System.in);
+		while (true) {
+			System.out.print("\n> ");
+			String naredba = scanner.nextLine().trim();
 
-        while (true) {
-            System.out.print("\n> ");
-            String naredba = scanner.nextLine().trim();
+			if (naredba.isEmpty()) {
+				continue;
+			}
 
-            if (naredba.isEmpty()) {
-                continue;
-            }
+			if (naredba.equalsIgnoreCase("Q")) {
+				break;
+			}
 
-            if (naredba.equalsIgnoreCase("Q")) {
-                break;
-            }
+			obradiNaredbu(naredba);
+		}
 
-            obradiNaredbu(naredba);
-        }
+		scanner.close();
+	}
 
-        scanner.close();
-    }
+	/**
+	 * Obrađuje unesenu naredbu i poziva odgovarajuću metodu za izvršavanje.
+	 * Podržane naredbe: ITAK, ITAP, IRTA, IRO, ORTA, DRTA.
+	 *
+	 * @param naredba Unesena naredba s parametrima
+	 */
+	private static void obradiNaredbu(String naredba) {
+		String[] dijelovi = naredba.split("\\s+");
+		String komanda = dijelovi[0].toUpperCase();
 
-    private static void obradiNaredbu(String naredba) {
-        String[] dijelovi = naredba.split("\\s+");
-        String komanda = dijelovi[0].toUpperCase();
+		switch (komanda) {
+		case "ITAK":
+			obradiITAK(dijelovi);
+			break;
+		case "ITAP":
+			obradiITAP(dijelovi);
+			break;
+		case "IRTA":
+			obradiIRTA(dijelovi);
+			break;
+		case "IRO":
+			obradiIRO(dijelovi);
+			break;
+		case "ORTA":
+			obradiORTA(dijelovi);
+			break;
+		case "DRTA":
+			obradiDRTA(dijelovi);
+			break;
+		default:
+			System.err.println("GREŠKA: Nepoznata naredba '" + komanda + "'!");
+		}
+	}
 
-        switch (komanda) {
-        case "ITAK":
-            obradiITAK(dijelovi);
-            break;
-        case "ITAP":
-            obradiITAP(dijelovi);
-            break;
-        case "IRTA":
-            obradiIRTA(dijelovi);
-            break;
-        case "IRO":
-            obradiIRO(dijelovi);
-            break;
-        case "ORTA":
-            obradiORTA(dijelovi);
-            break;
-        case "DRTA":
-            obradiDRTA(dijelovi);
-            break;
-        default:
-            System.err.println("GREŠKA: Nepoznata naredba '" + komanda + "'!");
-        }
-    }
+	/**
+	 * Obrađuje naredbu ITAK - Ispis turističkih aranžmana kataloga. Bez parametara
+	 * ispisuje sve aranžmane. S parametrima (datum od, datum do) filtrira aranžmane
+	 * po datumskom rasponu.
+	 *
+	 * @param dijelovi Dijelovi naredbe (komanda, opcionalno: datum_od, datum_do)
+	 */
+	private static void obradiITAK(String[] dijelovi) {
+		TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+		List<Aranzman> aranzmani = agencija.dohvatiSveAranzmane();
 
-    private static void obradiITAK(String[] dijelovi) {
-        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
-        List<Aranzman> aranzmani = agencija.dohvatiSveAranzmane();
+		if (dijelovi.length >= 3) {
+			LocalDate od = DatumParser.parsirajDatum(dijelovi[1]);
+			LocalDate do_ = DatumParser.parsirajDatum(dijelovi[2]);
 
-        if (dijelovi.length >= 3) {
-            LocalDate od = DatumParser.parsirajDatum(dijelovi[1]);
-            LocalDate do_ = DatumParser.parsirajDatum(dijelovi[2]);
+			if (od == null || do_ == null) {
+				System.err.println("GREŠKA: Neispravan format datuma!");
+				System.err.println("Format: ITAK dd.MM.yyyy. dd.MM.yyyy.");
+				return;
+			}
 
-            if (od == null || do_ == null) {
-                System.err.println("GREŠKA: Neispravan format datuma!");
-                System.err.println("Format: ITAK dd.MM.yyyy. dd.MM.yyyy.");
-                return;
-            }
+			List<Aranzman> filtrirano = new ArrayList<>();
+			for (Aranzman a : aranzmani) {
+				LocalDate pocetak = a.getPocetniDatum();
+				LocalDate kraj = a.getZavrsniDatum();
 
-            aranzmani = aranzmani.stream().filter(a -> {
-                LocalDate pocetak = a.getPocetniDatum();
-                LocalDate kraj = a.getZavrsniDatum();
-                return !pocetak.isAfter(do_) && !kraj.isBefore(od);
-            }).collect(java.util.stream.Collectors.toList());
-        }
+				if (!pocetak.isAfter(do_) && !kraj.isBefore(od)) {
+					filtrirano.add(a);
+				}
+			}
 
-        ispisiTablicuAranzmana(aranzmani);
-    }
+			aranzmani = filtrirano;
+		}
 
-    private static void ispisiTablicuAranzmana(List<Aranzman> aranzmani) {
-        if (aranzmani.isEmpty()) {
-            System.out.println("Nema aranžmana za prikaz.");
-            return;
-        }
+		ispisiTablicuAranzmana(aranzmani);
+	}
 
-        System.out.printf("%-10s %-30s %-12s %-12s %-10s %-10s %-10s %-8s %-8s%n",
-            "Oznaka", "Naziv", "Početni", "Završni", "Kretanje", "Povratak",
-            "Cijena", "Min", "Maks");
-        System.out.println(String.format("%0" + 120 + "d", 0).replace("0", "-"));
+	/**
+	 * Ispisuje tablicu aranžmana sa svim važnim podacima. Tablica uključuje:
+	 * oznaku, naziv, početni i završni datum, vrijeme kretanja i povratka, cijenu
+	 * te minimalni i maksimalni broj putnika.
+	 *
+	 * @param aranzmani Lista aranžmana za ispis
+	 */
+	private static void ispisiTablicuAranzmana(List<Aranzman> aranzmani) {
+		if (aranzmani.isEmpty()) {
+			System.out.println("Nema aranžmana za prikaz.");
+			return;
+		}
 
-        for (Aranzman a : aranzmani) {
-            String kretanje = DatumParser.formatirajVrijeme(a.getVrijemeKretanja());
-            String povratak = DatumParser.formatirajVrijeme(a.getVrijemePovratka());
+		System.out.printf("%-10s %-30s %-12s %-12s %-10s %-10s %-10s %-8s %-8s%n", "Oznaka", "Naziv", "Početni",
+				"Završni", "Kretanje", "Povratak", "Cijena", "Min", "Maks");
+		System.out.println(String.format("%0" + 120 + "d", 0).replace("0", "-"));
 
-            System.out.printf("%-10s %-30s %-12s %-12s %-10s %-10s %-10.2f %-8d %-8d%n",
-                a.getOznaka(),
-                skratiTekst(a.getNaziv(), 30),
-                DatumParser.formatirajDatum(a.getPocetniDatum()),
-                DatumParser.formatirajDatum(a.getZavrsniDatum()),
-                kretanje,
-                povratak,
-                a.getCijena(),
-                a.getMinBrojPutnika(),
-                a.getMaksBrojPutnika());
-        }
-    }
+		for (Aranzman a : aranzmani) {
+			String kretanje = DatumParser.formatirajVrijeme(a.getVrijemeKretanja());
+			String povratak = DatumParser.formatirajVrijeme(a.getVrijemePovratka());
 
-    private static String skratiTekst(String tekst, int maxDuljina) {
-        if (tekst.length() <= maxDuljina) {
-            return tekst;
-        }
-        return tekst.substring(0, maxDuljina - 3) + "...";
-    }
+			System.out.printf("%-10s %-30s %-12s %-12s %-10s %-10s %-10.2f %-8d %-8d%n", a.getOznaka(),
+					skratiTekst(a.getNaziv(), 30), DatumParser.formatirajDatum(a.getPocetniDatum()),
+					DatumParser.formatirajDatum(a.getZavrsniDatum()), kretanje, povratak, a.getCijena(),
+					a.getMinBrojPutnika(), a.getMaksBrojPutnika());
+		}
+	}
 
-    private static void obradiITAP(String[] dijelovi) {
-        if (dijelovi.length < 2) {
-            System.err.println("GREŠKA: Nedostaje oznaka aranžmana!");
-            return;
-        }
+	/**
+	 * Skraćuje tekst na zadanu maksimalnu duljinu. Ako je tekst duži od maksimalne
+	 * duljine, dodaje "..." na kraj.
+	 *
+	 * @param tekst      Tekst za skraćivanje
+	 * @param maxDuljina Maksimalna dopuštena duljina
+	 * @return Skraćeni tekst ili originalni tekst ako je kraći od maksimalne
+	 *         duljine
+	 */
+	private static String skratiTekst(String tekst, int maxDuljina) {
+		if (tekst.length() <= maxDuljina) {
+			return tekst;
+		}
+		return tekst.substring(0, maxDuljina - 3) + "...";
+	}
 
-        String oznaka = dijelovi[1];
-        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
-        Aranzman a = agencija.dohvatiAranzman(oznaka);
+	/**
+	 * Obrađuje naredbu ITAP - Ispis turističkog aranžmana po oznaci. Ispisuje sve
+	 * detalje pojedinačnog aranžmana.
+	 *
+	 * @param dijelovi Dijelovi naredbe (komanda, oznaka_aranžmana)
+	 */
+	private static void obradiITAP(String[] dijelovi) {
+		if (dijelovi.length < 2) {
+			System.err.println("GREŠKA: Nedostaje oznaka aranžmana!");
+			return;
+		}
 
-        if (a == null) {
-            System.err.println("GREŠKA: Aranžman '" + oznaka + "' ne postoji!");
-            return;
-        }
+		String oznaka = dijelovi[1];
+		TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+		Aranzman a = agencija.dohvatiAranzman(oznaka);
 
-        System.out.println("Oznaka: " + a.getOznaka());
-        System.out.println("Naziv: " + a.getNaziv());
-        
-        // ← ISPRAVLJENO: Zamjena \n sa stvarnim novim redom
-        if (a.getProgram() != null && !a.getProgram().isEmpty()) {
-            System.out.println("Program:");
-            String program = a.getProgram().replace("\\n", "\n");
-            for (String linija : program.split("\n")) {
-                System.out.println("  " + linija);
-            }
-        } else {
-            System.out.println("Program: -");
-        }
-        
-        System.out.println("Početni datum: " + DatumParser.formatirajDatum(a.getPocetniDatum()));
-        System.out.println("Završni datum: " + DatumParser.formatirajDatum(a.getZavrsniDatum()));
-        System.out.println("Vrijeme kretanja: " + DatumParser.formatirajVrijeme(a.getVrijemeKretanja()));
-        System.out.println("Vrijeme povratka: " + DatumParser.formatirajVrijeme(a.getVrijemePovratka()));
-        System.out.println("Cijena: " + a.getCijena() + " EUR");
-        System.out.println("Min broj putnika: " + a.getMinBrojPutnika());
-        System.out.println("Maks broj putnika: " + a.getMaksBrojPutnika());
-        System.out.println("Broj noćenja: " + a.getBrojNocenja());
-        System.out.println("Doplata za jednokrevetnu sobu: "
-            + (a.getDoplataZaJednokrevetnuSobu() != null ? 
-               a.getDoplataZaJednokrevetnuSobu() + " EUR" : "-"));
-        System.out.println("Prijevoz: " + (a.getPrijevoz() != null ? a.getPrijevoz() : "-"));
-        System.out.println("Broj doručka: " + a.getBrojDorucka());
-        System.out.println("Broj ručkova: " + a.getBrojRuckova());
-        System.out.println("Broj večera: " + a.getBrojVecera());
-    }
+		if (a == null) {
+			System.err.println("GREŠKA: Aranžman '" + oznaka + "' ne postoji!");
+			return;
+		}
 
-    private static void obradiIRTA(String[] dijelovi) {
-        if (dijelovi.length < 2) {
-            System.err.println("GREŠKA: Nedostaje oznaka aranžmana!");
-            return;
-        }
+		System.out.println("Oznaka: " + a.getOznaka());
+		System.out.println("Naziv: " + a.getNaziv());
 
-        String oznaka = dijelovi[1];
-        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
-        List<Rezervacija> rezervacije;
-        boolean prikaziOtkaz = false;
+		if (a.getProgram() != null && !a.getProgram().isEmpty()) {
+			System.out.println("Program:");
+			String program = a.getProgram().replace("\\n", "\n");
+			for (String linija : program.split("\n")) {
+				System.out.println("  " + linija);
+			}
+		} else {
+			System.out.println("Program: -");
+		}
 
-        if (dijelovi.length >= 3) {
-            String filter = dijelovi[2].toUpperCase();
+		System.out.println("Početni datum: " + DatumParser.formatirajDatum(a.getPocetniDatum()));
+		System.out.println("Završni datum: " + DatumParser.formatirajDatum(a.getZavrsniDatum()));
+		System.out.println("Vrijeme kretanja: " + DatumParser.formatirajVrijeme(a.getVrijemeKretanja()));
+		System.out.println("Vrijeme povratka: " + DatumParser.formatirajVrijeme(a.getVrijemePovratka()));
+		System.out.println("Cijena: " + a.getCijena() + " EUR");
+		System.out.println("Min broj putnika: " + a.getMinBrojPutnika());
+		System.out.println("Maks broj putnika: " + a.getMaksBrojPutnika());
+		System.out.println("Broj noćenja: " + a.getBrojNocenja());
+		System.out.println("Doplata za jednokrevetnu sobu: "
+				+ (a.getDoplataZaJednokrevetnuSobu() != null ? a.getDoplataZaJednokrevetnuSobu() + " EUR" : "-"));
+		System.out.println("Prijevoz: " + (a.getPrijevoz() != null ? a.getPrijevoz() : "-"));
+		System.out.println("Broj doručka: " + a.getBrojDorucka());
+		System.out.println("Broj ručkova: " + a.getBrojRuckova());
+		System.out.println("Broj večera: " + a.getBrojVecera());
+	}
 
-            if (filter.contains("PA")) {
-                rezervacije = agencija.dohvatiRezervacije(oznaka).stream()
-                    .filter(r -> r.jePrimljena() || r.jeAktivna())
-                    .collect(java.util.stream.Collectors.toList());
-            } else if (filter.contains("Č")) {
-                rezervacije = agencija.dohvatiRezervacije(oznaka).stream()
-                    .filter(r -> r.jeNaCekanju())
-                    .collect(java.util.stream.Collectors.toList());
-            } else if (filter.contains("O")) {
-                prikaziOtkaz = true;
-                rezervacije = agencija.dohvatiRezervacije(oznaka);
-            } else {
-                System.err.println("GREŠKA: Nepoznata oznaka stanja!");
-                return;
-            }
-        } else {
-            rezervacije = agencija.dohvatiRezervacije(oznaka);
-        }
+	/**
+	 * Obrađuje naredbu IRTA - Ispis rezervacija turističkog aranžmana. Bez dodatnih
+	 * parametara ispisuje sve rezervacije. S parametrima filtrira po stanju: PA
+	 * (primljene i aktivne), Č (na čekanju), O (otkazane), PAČO (sve sa datumom
+	 * otkaza).
+	 *
+	 * @param dijelovi Dijelovi naredbe (komanda, oznaka_aranžmana, opcionalno:
+	 *                 filter)
+	 */
+	private static void obradiIRTA(String[] dijelovi) {
+		if (dijelovi.length < 2) {
+			System.err.println("GREŠKA: Nedostaje oznaka aranžmana!");
+			return;
+		}
 
-        ispisiTablicuRezervacija(rezervacije, prikaziOtkaz);
-    }
+		String oznaka = dijelovi[1];
+		TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+		List<Rezervacija> rezervacije;
+		boolean prikaziOtkaz = false;
 
-    private static void ispisiTablicuRezervacija(List<Rezervacija> rezervacije,
-                                                 boolean prikaziOtkaz) {
-        if (rezervacije.isEmpty()) {
-            System.out.println("Nema rezervacija za prikaz.");
-            return;
-        }
+		if (dijelovi.length >= 3) {
+			String filter = dijelovi[2].toUpperCase();
 
-        if (prikaziOtkaz) {
-            System.out.printf("%-15s %-15s %-20s %-12s %-20s%n",
-                "Ime", "Prezime", "Datum i vrijeme", "Vrsta", "Datum otkaza");
-            System.out.println(String.format("%0" + 82 + "d", 0).replace("0", "-"));
-        } else {
-            System.out.printf("%-15s %-15s %-20s %-12s%n",
-                "Ime", "Prezime", "Datum i vrijeme", "Vrsta");
-            System.out.println(String.format("%0" + 62 + "d", 0).replace("0", "-"));
-        }
+			if (filter.equals("PA")) {
+				rezervacije = new ArrayList<>();
+				for (Rezervacija r : agencija.dohvatiRezervacije(oznaka)) {
+					if (r.jePrimljena() || r.jeAktivna()) {
+						rezervacije.add(r);
+					}
+				}
+			} else if (filter.equals("Č")) {
+				rezervacije = new ArrayList<>();
+				for (Rezervacija r : agencija.dohvatiRezervacije(oznaka)) {
+					if (r.jeNaCekanju()) {
+						rezervacije.add(r);
+					}
+				}
+			} else if (filter.equals("O")) {
+				prikaziOtkaz = true;
+				rezervacije = new ArrayList<>();
+				for (Rezervacija r : agencija.dohvatiRezervacije(oznaka)) {
+					if (r.jeOtkazana()) {
+						rezervacije.add(r);
+					}
+				}
+			} else if (filter.equals("PAČO")) {
+				prikaziOtkaz = true;
+				rezervacije = agencija.dohvatiRezervacije(oznaka);
+			} else {
+				System.err.println("GREŠKA: Nepoznata oznaka stanja! Dopuštene su: PA, Č, O, PAČO");
+				return;
+			}
+		} else {
+			rezervacije = agencija.dohvatiRezervacije(oznaka);
+		}
 
-        for (Rezervacija r : rezervacije) {
-            if (prikaziOtkaz) {
-                String datumOtkaza = DatumParser.formatirajDatumVrijeme(
-                    r.getDatumVrijemeOtkaza());
+		ispisiTablicuRezervacija(rezervacije, prikaziOtkaz);
+	}
 
-                System.out.printf("%-15s %-15s %-20s %-12s %-20s%n",
-                    r.getOsoba().getIme(),
-                    r.getOsoba().getPrezime(),
-                    DatumParser.formatirajDatumVrijeme(r.getDatumVrijemePrijema()),
-                    r.getStanje().getOznaka(),
-                    datumOtkaza);
-            } else {
-                System.out.printf("%-15s %-15s %-20s %-12s%n",
-                    r.getOsoba().getIme(),
-                    r.getOsoba().getPrezime(),
-                    DatumParser.formatirajDatumVrijeme(r.getDatumVrijemePrijema()),
-                    r.getStanje().getOznaka());
-            }
-        }
-    }
+	/**
+	 * Ispisuje tablicu rezervacija. Tablica uključuje ime, prezime, datum i vrijeme
+	 * prijema te vrstu rezervacije. Opcionalno prikazuje i datum otkaza ako je
+	 * označeno.
+	 *
+	 * @param rezervacije  Lista rezervacija za ispis
+	 * @param prikaziOtkaz True ako treba prikazati stupac s datumom otkaza, false
+	 *                     inače
+	 */
+	private static void ispisiTablicuRezervacija(List<Rezervacija> rezervacije, boolean prikaziOtkaz) {
+		if (rezervacije.isEmpty()) {
+			System.out.println("Nema rezervacija za prikaz.");
+			return;
+		}
 
-    private static void obradiIRO(String[] dijelovi) {
-        if (dijelovi.length < 3) {
-            System.err.println("GREŠKA: Nedostaju ime i prezime!");
-            return;
-        }
+		if (prikaziOtkaz) {
+			System.out.printf("%-15s %-15s %-20s %-12s %-20s%n", "Ime", "Prezime", "Datum i vrijeme", "Vrsta",
+					"Datum otkaza");
+			System.out.println(String.format("%0" + 82 + "d", 0).replace("0", "-"));
+		} else {
+			System.out.printf("%-15s %-15s %-20s %-12s%n", "Ime", "Prezime", "Datum i vrijeme", "Vrsta");
+			System.out.println(String.format("%0" + 62 + "d", 0).replace("0", "-"));
+		}
 
-        String ime = dijelovi[1];
-        String prezime = dijelovi[2];
+		for (Rezervacija r : rezervacije) {
+			if (prikaziOtkaz) {
+				String datumOtkaza = DatumParser.formatirajDatumVrijeme(r.getDatumVrijemeOtkaza());
 
-        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
-        List<Rezervacija> rezervacije = agencija.dohvatiRezervacijeOsobe(ime, prezime);
+				System.out.printf("%-15s %-15s %-20s %-12s %-20s%n", r.getOsoba().getIme(), r.getOsoba().getPrezime(),
+						DatumParser.formatirajDatumVrijeme(r.getDatumVrijemePrijema()), r.getStanje().getOznaka(),
+						datumOtkaza);
+			} else {
+				System.out.printf("%-15s %-15s %-20s %-12s%n", r.getOsoba().getIme(), r.getOsoba().getPrezime(),
+						DatumParser.formatirajDatumVrijeme(r.getDatumVrijemePrijema()), r.getStanje().getOznaka());
+			}
+		}
+	}
 
-        if (rezervacije.isEmpty()) {
-            System.out.println("Nema rezervacija za osobu " + ime + " " + prezime + ".");
-            return;
-        }
+	/**
+	 * Obrađuje naredbu IRO - Ispis rezervacija osobe. Ispisuje sve rezervacije
+	 * određene osobe na svim aranžmanima.
+	 *
+	 * @param dijelovi Dijelovi naredbe (komanda, ime, prezime)
+	 */
+	private static void obradiIRO(String[] dijelovi) {
+		if (dijelovi.length < 3) {
+			System.err.println("GREŠKA: Nedostaju ime i prezime!");
+			return;
+		}
 
-        System.out.printf("%-20s %-10s %-30s %-12s%n",
-            "Datum i vrijeme", "Oznaka", "Naziv aranžmana", "Vrsta");
-        System.out.println(String.format("%0" + 72 + "d", 0).replace("0", "-"));
+		String ime = dijelovi[1];
+		String prezime = dijelovi[2];
 
-        for (Rezervacija r : rezervacije) {
-            Aranzman a = agencija.dohvatiAranzman(r.getOznakaAranzmana());
-            String naziv = a != null ? skratiTekst(a.getNaziv(), 30) : "-";
+		TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+		List<Rezervacija> rezervacije = agencija.dohvatiRezervacijeOsobe(ime, prezime);
 
-            System.out.printf("%-20s %-10s %-30s %-12s%n",
-                DatumParser.formatirajDatumVrijeme(r.getDatumVrijemePrijema()),
-                r.getOznakaAranzmana(),
-                naziv,
-                r.getStanje().getOznaka());
-        }
-    }
+		if (rezervacije.isEmpty()) {
+			System.out.println("Nema rezervacija za osobu " + ime + " " + prezime + ".");
+			return;
+		}
 
-    private static void obradiORTA(String[] dijelovi) {
-        if (dijelovi.length < 4) {
-            System.err.println("GREŠKA: Nedostaju podaci (ime prezime oznaka)!");
-            return;
-        }
+		System.out.printf("%-20s %-10s %-30s %-12s%n", "Datum i vrijeme", "Oznaka", "Naziv aranžmana", "Vrsta");
+		System.out.println(String.format("%0" + 72 + "d", 0).replace("0", "-"));
 
-        String ime = dijelovi[1];
-        String prezime = dijelovi[2];
-        String oznaka = dijelovi[3];
+		for (Rezervacija r : rezervacije) {
+			Aranzman a = agencija.dohvatiAranzman(r.getOznakaAranzmana());
+			String naziv = a != null ? skratiTekst(a.getNaziv(), 30) : "-";
 
-        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
-        boolean uspjeh = agencija.otkaziRezervaciju(ime, prezime, oznaka, LocalDateTime.now());
+			System.out.printf("%-20s %-10s %-30s %-12s%n",
+					DatumParser.formatirajDatumVrijeme(r.getDatumVrijemePrijema()), r.getOznakaAranzmana(), naziv,
+					r.getStanje().getOznaka());
+		}
+	}
 
-        if (uspjeh) {
-            System.out.println("Rezervacija uspješno otkazana.");
-        } else {
-            System.err.println("GREŠKA: Rezervacija nije pronađena!");
-        }
-    }
+	/**
+	 * Obrađuje naredbu ORTA - Otkaz rezervacije turističkog aranžmana. Otkazuje
+	 * najstariju rezervaciju određene osobe za navedeni aranžman. Datum otkaza
+	 * postavlja se na trenutno vrijeme.
+	 *
+	 * @param dijelovi Dijelovi naredbe (komanda, ime, prezime, oznaka_aranžmana)
+	 */
+	private static void obradiORTA(String[] dijelovi) {
+		if (dijelovi.length < 4) {
+			System.err.println("GREŠKA: Nedostaju podaci (ime prezime oznaka)!");
+			return;
+		}
 
-    private static void obradiDRTA(String[] dijelovi) {
-        if (dijelovi.length < 6) {
-            System.err.println("GREŠKA: Nedostaju podaci!");
-            System.err.println("Format: DRTA ime prezime oznaka datum vrijeme");
-            return;
-        }
+		String ime = dijelovi[1];
+		String prezime = dijelovi[2];
+		String oznaka = dijelovi[3];
 
-        String ime = dijelovi[1];
-        String prezime = dijelovi[2];
-        String oznaka = dijelovi[3];
-        String datumVrijemeTekst = dijelovi[4] + " " + dijelovi[5];
+		TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+		boolean uspjeh = agencija.otkaziRezervaciju(ime, prezime, oznaka, LocalDateTime.now());
 
-        LocalDateTime datumVrijeme = DatumParser.parsirajDatumVrijeme(datumVrijemeTekst);
-        if (datumVrijeme == null) {
-            System.err.println("GREŠKA: Neispravan format datuma/vremena!");
-            return;
-        }
+		if (uspjeh) {
+			System.out.println("Rezervacija uspješno otkazana.");
+		} else {
+			System.err.println("GREŠKA: Rezervacija nije pronađena!");
+		}
+	}
 
-        Osoba osoba = new Osoba(ime, prezime);
-        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
-        boolean uspjeh = agencija.dodajNovuRezervaciju(osoba, oznaka, datumVrijeme);
+	/**
+	 * Obrađuje naredbu DRTA - Dodaj rezervaciju turističkog aranžmana. Dodaje novu
+	 * rezervaciju za određenu osobu na navedeni aranžman.
+	 *
+	 * @param dijelovi Dijelovi naredbe (komanda, ime, prezime, oznaka_aranžmana,
+	 *                 datum, vrijeme)
+	 */
+	private static void obradiDRTA(String[] dijelovi) {
+		if (dijelovi.length < 6) {
+			System.err.println("GREŠKA: Nedostaju podaci!");
+			System.err.println("Format: DRTA ime prezime oznaka datum vrijeme");
+			return;
+		}
 
-        if (uspjeh) {
-            System.out.println("Rezervacija uspješno dodana.");
-        } else {
-            System.err.println("GREŠKA: Rezervacija nije dodana!");
-        }
-    }
+		String ime = dijelovi[1];
+		String prezime = dijelovi[2];
+		String oznaka = dijelovi[3];
+		String datumVrijemeTekst = dijelovi[4] + " " + dijelovi[5];
+
+		LocalDateTime datumVrijeme = DatumParser.parsirajDatumVrijeme(datumVrijemeTekst);
+		if (datumVrijeme == null) {
+			System.err.println("GREŠKA: Neispravan format datuma/vremena!");
+			return;
+		}
+
+		Osoba osoba = new Osoba(ime, prezime);
+		TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+		boolean uspjeh = agencija.dodajNovuRezervaciju(osoba, oznaka, datumVrijeme);
+
+		if (uspjeh) {
+			System.out.println("Rezervacija uspješno dodana.");
+		} else {
+			System.err.println("GREŠKA: Rezervacija nije dodana!");
+		}
+	}
 }
