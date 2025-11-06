@@ -12,10 +12,11 @@ import java.util.List;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.konfiguracija.pomocne.DatumParser;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Aranzman;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.AranzmanBuilder;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_1.model.Builder;
 
 /**
  * Čitač CSV datoteke s turističkim aranžmanima.
- * Učitava podatke o aranžmanima iz CSV formata i kreira objekte korištenjem AranzmanBuilder uzorka.
+ * Učitava podatke o aranžmanima iz CSV formata i kreira objekte korištenjem Builder uzorka.
  */
 public class CsvCitacAranzmana {
     
@@ -80,7 +81,7 @@ public class CsvCitacAranzmana {
                 return null;
             }
             
-            AranzmanBuilder builder = parsirajObavezneAtribute(dijelovi, redniBroj, linija);
+            Builder builder = parsirajObavezneAtribute(dijelovi, redniBroj, linija);
             if (builder == null) {
                 return null;
             }
@@ -96,18 +97,19 @@ public class CsvCitacAranzmana {
     }
     
     /**
-     * Parsira obavezne atribute aranžmana i kreira AranzmanBuilder.
+     * Parsira obavezne atribute aranžmana i kreira Builder.
+     * Koristi Builder sučelje što omogućava korištenje različitih ConcreteBuilder implementacija.
      * Obavezni atributi: oznaka, naziv, početni datum, završni datum, cijena,
      * minimalni broj putnika, maksimalni broj putnika.
      *
      * @param dijelovi Polje parsiranih vrijednosti iz CSV retka
      * @param redniBroj Redni broj retka (za ispis grešaka)
      * @param linija Originalna linija (za ispis grešaka)
-     * @return AranzmanBuilder objekt s obaveznim atributima ili null ako parsiranje nije uspjelo
+     * @return Builder objekt s obaveznim atributima ili null ako parsiranje nije uspjelo
      */
-    private AranzmanBuilder parsirajObavezneAtribute(String[] dijelovi, 
-                                                     int redniBroj, 
-                                                     String linija) {
+    private Builder parsirajObavezneAtribute(String[] dijelovi, 
+                                            int redniBroj, 
+                                            String linija) {
         String oznaka = dohvatiVrijednost(dijelovi, 0);
         String naziv = dohvatiVrijednost(dijelovi, 1);
         String program = dohvatiVrijednost(dijelovi, 2);
@@ -130,7 +132,7 @@ public class CsvCitacAranzmana {
             return null;
         }
         
-        AranzmanBuilder builder = new AranzmanBuilder(
+        Builder builder = new AranzmanBuilder(
             oznaka, naziv, pocetniDatum, zavrsniDatum, cijena, 
             minBrojPutnika, maksBrojPutnika
         );
@@ -153,10 +155,10 @@ public class CsvCitacAranzmana {
      * Opcionalni atributi: broj noćenja, doplata za jednokrevetnu sobu, prijevoz,
      * broj doručaka, broj ručkova, broj večera.
      *
-     * @param builder AranzmanBuilder u koji se dodaju opcionalni atributi
+     * @param builder Builder u koji se dodaju opcionalni atributi
      * @param dijelovi Polje parsiranih vrijednosti iz CSV retka
      */
-    private void parsirajOpcionalneAtribute(AranzmanBuilder builder, String[] dijelovi) {
+    private void parsirajOpcionalneAtribute(Builder builder, String[] dijelovi) {
         if (dijelovi.length > 10) {
             Integer brojNocenja = parsirajInteger(dohvatiVrijednost(dijelovi, 10));
             if (brojNocenja != null) {
