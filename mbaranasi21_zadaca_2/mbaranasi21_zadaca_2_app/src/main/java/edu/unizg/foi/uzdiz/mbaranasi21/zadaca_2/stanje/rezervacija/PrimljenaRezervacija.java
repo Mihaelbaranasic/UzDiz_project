@@ -1,42 +1,42 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija;
 
+import java.time.LocalDateTime;
+
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.model.Rezervacija;
 
 /**
- * Stanje PRIMLJENA - broj prijava nije dostigao min putnika.
+ * ConcreteState - PRIMLJENA rezervacija.
  */
 public class PrimljenaRezervacija implements RezervacijaStanje {
     
     @Override
-    public boolean primljena(Rezervacija rezervacija) {
-        // Primljena -> Primljena (OSTAJE)
-        return true;
+    public void nova(Rezervacija rezervacija) {
+        rezervacija.setStanje(new NovaRezervacija());
     }
     
     @Override
-    public boolean aktiviraj(Rezervacija rezervacija) {
-        // Primljena -> Aktivna (DOZVOLJENO - dostignut min)
+    public void primljena(Rezervacija rezervacija) {
+    }
+    
+    @Override
+    public void aktiviraj(Rezervacija rezervacija) {
         rezervacija.setStanje(new AktivnaRezervacija());
-        return true;
     }
     
     @Override
-    public boolean stavi_na_cekanje(Rezervacija rezervacija) {
-        // Primljena -> Na čekanju (NE MOŽE direktno)
-        return false;
+    public void staviNaCekanje(Rezervacija rezervacija) {
+        rezervacija.setStanje(new NaCekanjuRezervacija());
     }
     
     @Override
-    public boolean odgodi(Rezervacija rezervacija) {
-        // Primljena -> Odgođena (NE MOŽE - nema aktivnih)
-        return false;
+    public void odgodi(Rezervacija rezervacija) {
+        rezervacija.setStanje(new OdgodenaRezervacija());
     }
     
     @Override
-    public boolean otkazi(Rezervacija rezervacija) {
-        // Primljena -> Otkazana (DOZVOLJENO)
+    public void otkazi(Rezervacija rezervacija, LocalDateTime datumOtkaza) {
+        rezervacija.setDatumOtkaza(datumOtkaza);
         rezervacija.setStanje(new OtkazanaRezervacija());
-        return true;
     }
     
     @Override

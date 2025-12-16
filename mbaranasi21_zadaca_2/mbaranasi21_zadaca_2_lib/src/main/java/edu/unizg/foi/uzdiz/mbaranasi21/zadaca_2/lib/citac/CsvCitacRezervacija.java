@@ -13,19 +13,18 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.lib.pomocne.DatumParser;
 
 /**
  * Čitač CSV datoteke s rezervacijama.
- * Učitava podatke iz CSV formata i vraća DTO objekte (bez poslovne logike).
  */
 public class CsvCitacRezervacija {
     
+    private int brojGreske = 0;
+    
     /**
      * Učitava rezervacije iz CSV datoteke.
-     *
-     * @param putanja Putanja do CSV datoteke
-     * @return Lista uspješno učitanih rezervacija kao DTO objekti
      */
     public List<RezervacijaDTO> ucitaj(String putanja) {
         List<RezervacijaDTO> rezervacije = new ArrayList<>();
         int redniBroj = 0;
+        brojGreske = 0;
         
         try (BufferedReader br = new BufferedReader(
                 new FileReader(putanja, StandardCharsets.UTF_8))) {
@@ -60,17 +59,14 @@ public class CsvCitacRezervacija {
     
     /**
      * Parsira jedan redak CSV datoteke u DTO.
-     *
-     * @param linija Linija za parsiranje
-     * @param redniBroj Redni broj linije
-     * @return RezervacijaDTO ili null ako parsiranje nije uspjelo
      */
     private RezervacijaDTO parsirajRedak(String linija, int redniBroj) {
         try {
             String[] dijelovi = linija.split(",");
             
             if (dijelovi.length < 4) {
-                ispisiGresku(redniBroj, linija, "Nedostaju obavezni atributi (potrebna 4)");
+                ispisiGresku(redniBroj, linija, 
+                    "Nedostaju obavezni atributi (potrebna 4)");
                 return null;
             }
             
@@ -93,8 +89,14 @@ public class CsvCitacRezervacija {
         }
     }
     
+    /**
+     * Ispisuje grešku u formatu: [GREŠKA N] + cijeli redak + objašnjenje.
+     */
     private void ispisiGresku(int redniBroj, String sadrzaj, String opis) {
-        System.err.println("GREŠKA u retku " + redniBroj + ": " + opis);
-        System.err.println("  Sadržaj: " + sadrzaj);
+        brojGreske++;
+        System.err.println("[GREŠKA " + brojGreske + "] Redak " + redniBroj + ":");
+        System.err.println(sadrzaj);
+        System.err.println("Razlog: " + opis);
+        System.err.println();
     }
 }

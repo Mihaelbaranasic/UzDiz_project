@@ -1,42 +1,42 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija;
 
+import java.time.LocalDateTime;
+
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.model.Rezervacija;
 
 /**
- * Stanje NA_CEKANJU - broj prijava prešao max.
+ * ConcreteState - NA ČEKANJU rezervacija.
  */
 public class NaCekanjuRezervacija implements RezervacijaStanje {
     
     @Override
-    public boolean primljena(Rezervacija rezervacija) {
-        // Na čekanju -> Primljena (NE MOŽE)
-        return false;
+    public void nova(Rezervacija rezervacija) {
+        System.err.println("Rezervacija na čekanju ne može postati nova!");
     }
     
     @Override
-    public boolean aktiviraj(Rezervacija rezervacija) {
-        // Na čekanju -> Aktivna (DOZVOLJENO - oslobodi se mjesto)
+    public void primljena(Rezervacija rezervacija) {
+        rezervacija.setStanje(new PrimljenaRezervacija());
+    }
+    
+    @Override
+    public void aktiviraj(Rezervacija rezervacija) {
         rezervacija.setStanje(new AktivnaRezervacija());
-        return true;
     }
     
     @Override
-    public boolean stavi_na_cekanje(Rezervacija rezervacija) {
-        // Na čekanju -> Na čekanju (OSTAJE)
-        return true;
+    public void staviNaCekanje(Rezervacija rezervacija) {
     }
     
     @Override
-    public boolean odgodi(Rezervacija rezervacija) {
-        // Na čekanju -> Odgođena (NE MOŽE - nije aktivna)
-        return false;
+    public void odgodi(Rezervacija rezervacija) {
+        rezervacija.setStanje(new OdgodenaRezervacija());
     }
     
     @Override
-    public boolean otkazi(Rezervacija rezervacija) {
-        // Na čekanju -> Otkazana (DOZVOLJENO)
+    public void otkazi(Rezervacija rezervacija, LocalDateTime datumOtkaza) {
+        rezervacija.setDatumOtkaza(datumOtkaza);
         rezervacija.setStanje(new OtkazanaRezervacija());
-        return true;
     }
     
     @Override

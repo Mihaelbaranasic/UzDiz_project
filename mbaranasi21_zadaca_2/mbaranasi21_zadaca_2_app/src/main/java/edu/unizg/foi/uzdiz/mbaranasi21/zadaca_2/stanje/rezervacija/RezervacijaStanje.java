@@ -1,57 +1,23 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija;
 
+import java.time.LocalDateTime;
+
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.model.Rezervacija;
 
 /**
- * State interface za stanja rezervacije.
- * Definira operacije koje ovise o stanju rezervacije.
+ * State interface za Rezervacija State pattern.
  */
 public interface RezervacijaStanje {
     
-    /**
-     * Prelazi rezervaciju u stanje PRIMLJENA.
-     * 
-     * @param rezervacija Kontekst rezervacije
-     * @return true ako je prijelaz uspješan, false inače
-     */
-    boolean primljena(Rezervacija rezervacija);
+    void nova(Rezervacija rezervacija);
+    void primljena(Rezervacija rezervacija);
+    void aktiviraj(Rezervacija rezervacija);
+    void staviNaCekanje(Rezervacija rezervacija);
+    void odgodi(Rezervacija rezervacija);
+    void otkazi(Rezervacija rezervacija, LocalDateTime datumOtkaza);
     
     /**
-     * Prelazi rezervaciju u stanje AKTIVNA.
-     * 
-     * @param rezervacija Kontekst rezervacije
-     * @return true ako je prijelaz uspješan, false inače
-     */
-    boolean aktiviraj(Rezervacija rezervacija);
-    
-    /**
-     * Prelazi rezervaciju u stanje NA_CEKANJU.
-     * 
-     * @param rezervacija Kontekst rezervacije
-     * @return true ako je prijelaz uspješan, false inače
-     */
-    boolean stavi_na_cekanje(Rezervacija rezervacija);
-    
-    /**
-     * Prelazi rezervaciju u stanje ODGOĐENA.
-     * 
-     * @param rezervacija Kontekst rezervacije
-     * @return true ako je prijelaz uspješan, false inače
-     */
-    boolean odgodi(Rezervacija rezervacija);
-    
-    /**
-     * Prelazi rezervaciju u stanje OTKAZANA.
-     * 
-     * @param rezervacija Kontekst rezervacije
-     * @return true ako je prijelaz uspješan, false inače
-     */
-    boolean otkazi(Rezervacija rezervacija);
-    
-    /**
-     * Dohvaća naziv stanja.
-     * 
-     * @return Naziv stanja
+     * Vraća naziv stanja.
      */
     String getNazivStanja();
 }

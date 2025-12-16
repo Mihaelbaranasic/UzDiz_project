@@ -1,7 +1,14 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.model;
 
 import java.time.LocalDateTime;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija.*;
+
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija.AktivnaRezervacija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija.NaCekanjuRezervacija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija.NovaRezervacija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija.OdgodenaRezervacija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija.OtkazanaRezervacija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija.PrimljenaRezervacija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija.RezervacijaStanje;
 
 /**
  * Predstavlja rezervaciju osobe za turistički aranžman.
@@ -12,20 +19,14 @@ public class Rezervacija {
     private Osoba osoba;
     private String oznakaAranzmana;
     private LocalDateTime datumVrijemePrijema;
-    private RezervacijaStanje stanje;  // ← STATE PATTERN
+    private RezervacijaStanje stanje;
     private LocalDateTime datumVrijemeOtkaza;
     
     /**
      * Konstruktor za kreiranje nove rezervacije.
-     *
-     * @param osoba Osoba koja rezervira
-     * @param oznakaAranzmana Oznaka aranžmana
-     * @param datumVrijemePrijema Datum i vrijeme prijema rezervacije
-     * @param stanjeEnum Inicijalno stanje rezervacije (enum)
      */
     public Rezervacija(Osoba osoba, String oznakaAranzmana, 
-                      LocalDateTime datumVrijemePrijema, 
-                      StanjeRezervacije stanjeEnum) {
+            LocalDateTime datumVrijemePrijema, StanjeRezervacije stanjeEnum) {
         this.osoba = osoba;
         this.oznakaAranzmana = oznakaAranzmana;
         this.datumVrijemePrijema = datumVrijemePrijema;
@@ -55,6 +56,8 @@ public class Rezervacija {
         }
     }
     
+    // Getteri
+    
     public Osoba getOsoba() {
         return osoba;
     }
@@ -72,58 +75,115 @@ public class Rezervacija {
     }
     
     /**
-     * Dohvaća trenutno stanje kao enum (za kompatibilnost).
+     * Dohvaća trenutno stanje kao enum.
      */
     public StanjeRezervacije getStanje() {
         String naziv = stanje.getNazivStanja();
         return StanjeRezervacije.valueOf(naziv);
     }
     
+    // Setteri
+    
     /**
-     * Postavlja novo stanje (interno - koristi State pattern).
+     * Postavlja novo stanje (interno za State pattern).
      */
     public void setStanje(RezervacijaStanje novoStanje) {
         this.stanje = novoStanje;
     }
     
-    public boolean primljena() {
-        return stanje.primljena(this);
+    /**
+     * Postavlja datum otkazivanja.
+     */
+    public void setDatumOtkaza(LocalDateTime datumOtkaza) {
+        this.datumVrijemeOtkaza = datumOtkaza;
     }
     
-    public boolean aktiviraj() {
-        return stanje.aktiviraj(this);
+    // State prijelazi
+    
+    /**
+     * Postavlja rezervaciju na novu.
+     */
+    public void nova() {
+        stanje.nova(this);
     }
     
-    public boolean staviNaCekanje() {
-        return stanje.stavi_na_cekanje(this);
+    /**
+     * Postavlja rezervaciju na primljenu.
+     */
+    public void primljena() {
+        stanje.primljena(this);
     }
     
-    public boolean odgodi() {
-        return stanje.odgodi(this);
+    /**
+     * Aktivira rezervaciju.
+     */
+    public void aktiviraj() {
+        stanje.aktiviraj(this);
     }
     
-    public boolean otkazi(LocalDateTime datumVrijeme) {
-        boolean uspjeh = stanje.otkazi(this);
-        if (uspjeh) {
-            this.datumVrijemeOtkaza = datumVrijeme;
-        }
-        return uspjeh;
+    /**
+     * Postavlja rezervaciju na čekanje.
+     */
+    public void staviNaCekanje() {
+        stanje.staviNaCekanje(this);
     }
     
+    /**
+     * Odgađa rezervaciju.
+     */
+    public void odgodi() {
+        stanje.odgodi(this);
+    }
+    
+    /**
+     * Otkazuje rezervaciju.
+     */
+    public void otkazi(LocalDateTime datumVrijeme) {
+        stanje.otkazi(this, datumVrijeme);
+    }
+    
+    // Provjere stanja
+    
+    /**
+     * Provjerava je li rezervacija nova.
+     */
+    public boolean jeNova() {
+        return stanje.getNazivStanja().equals("NOVA");
+    }
+    
+    /**
+     * Provjerava je li rezervacija primljena.
+     */
     public boolean jePrimljena() {
-        return stanje instanceof PrimljenaRezervacija;
+        return stanje.getNazivStanja().equals("PRIMLJENA");
     }
     
+    /**
+     * Provjerava je li rezervacija aktivna.
+     */
     public boolean jeAktivna() {
-        return stanje instanceof AktivnaRezervacija;
+        return stanje.getNazivStanja().equals("AKTIVNA");
     }
     
+    /**
+     * Provjerava je li rezervacija na čekanju.
+     */
     public boolean jeNaCekanju() {
-        return stanje instanceof NaCekanjuRezervacija;
+        return stanje.getNazivStanja().equals("NA_CEKANJU");
     }
     
+    /**
+     * Provjerava je li rezervacija odgođena.
+     */
+    public boolean jeOdgodena() {
+        return stanje.getNazivStanja().equals("ODGOĐENA");
+    }
+    
+    /**
+     * Provjerava je li rezervacija otkazana.
+     */
     public boolean jeOtkazana() {
-        return stanje instanceof OtkazanaRezervacija;
+        return stanje.getNazivStanja().equals("OTKAZANA");
     }
     
     @Override

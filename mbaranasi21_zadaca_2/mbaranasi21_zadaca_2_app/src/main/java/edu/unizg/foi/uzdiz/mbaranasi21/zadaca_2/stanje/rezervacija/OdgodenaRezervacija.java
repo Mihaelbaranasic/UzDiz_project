@@ -1,42 +1,42 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.stanje.rezervacija;
 
+import java.time.LocalDateTime;
+
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_2.model.Rezervacija;
 
 /**
- * Stanje ODGOĐENA - osoba ima drugu raniju aktivnu rezervaciju.
+ * ConcreteState - ODGOĐENA rezervacija.
  */
 public class OdgodenaRezervacija implements RezervacijaStanje {
     
     @Override
-    public boolean primljena(Rezervacija rezervacija) {
-        // Odgođena -> Primljena (NE MOŽE)
-        return false;
+    public void nova(Rezervacija rezervacija) {
+        System.err.println("Odgođena rezervacija ne može postati nova!");
     }
     
     @Override
-    public boolean aktiviraj(Rezervacija rezervacija) {
-        // Odgođena -> Aktivna (DOZVOLJENO - ako se ranije otkaže)
+    public void primljena(Rezervacija rezervacija) {
+        rezervacija.setStanje(new PrimljenaRezervacija());
+    }
+    
+    @Override
+    public void aktiviraj(Rezervacija rezervacija) {
         rezervacija.setStanje(new AktivnaRezervacija());
-        return true;
     }
     
     @Override
-    public boolean stavi_na_cekanje(Rezervacija rezervacija) {
-        // Odgođena -> Na čekanju (NE MOŽE)
-        return false;
+    public void staviNaCekanje(Rezervacija rezervacija) {
+        rezervacija.setStanje(new NaCekanjuRezervacija());
     }
     
     @Override
-    public boolean odgodi(Rezervacija rezervacija) {
-        // Odgođena -> Odgođena (OSTAJE)
-        return true;
+    public void odgodi(Rezervacija rezervacija) {
     }
     
     @Override
-    public boolean otkazi(Rezervacija rezervacija) {
-        // Odgođena -> Otkazana (DOZVOLJENO)
+    public void otkazi(Rezervacija rezervacija, LocalDateTime datumOtkaza) {
+        rezervacija.setDatumOtkaza(datumOtkaza);
         rezervacija.setStanje(new OtkazanaRezervacija());
-        return true;
     }
     
     @Override
