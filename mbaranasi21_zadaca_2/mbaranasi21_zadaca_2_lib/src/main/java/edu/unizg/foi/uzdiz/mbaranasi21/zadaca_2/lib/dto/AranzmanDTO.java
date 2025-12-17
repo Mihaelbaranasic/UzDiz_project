@@ -52,7 +52,6 @@ public class AranzmanDTO {
         this.brojVecera = brojVecera;
     }
     
-    // Getteri i setteri za sva polja
     public String getOznaka() { return oznaka; }
     public void setOznaka(String oznaka) { this.oznaka = oznaka; }
     

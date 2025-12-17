@@ -21,7 +21,6 @@ public class AktivnaRezervacija implements RezervacijaStanje {
     
     @Override
     public void aktiviraj(Rezervacija rezervacija) {
-        // Već je aktivna
     }
     
     @Override

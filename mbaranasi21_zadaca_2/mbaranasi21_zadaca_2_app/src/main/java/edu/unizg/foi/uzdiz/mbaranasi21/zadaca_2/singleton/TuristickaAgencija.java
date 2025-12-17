@@ -26,7 +26,7 @@ public class TuristickaAgencija {
     private Map<String, Aranzman> aranzmani;
     private Map<String, List<Rezervacija>> rezervacijePoAranzmanu;
     private Map<String, AranzmanStanje> stanjaAranzmana;
-    private String kriterijSortiranja = "DATUM"; // ← DEFAULT: DATUM
+    private String kriterijSortiranja = "DATUM";
     
     /**
      * Privatni konstruktor.

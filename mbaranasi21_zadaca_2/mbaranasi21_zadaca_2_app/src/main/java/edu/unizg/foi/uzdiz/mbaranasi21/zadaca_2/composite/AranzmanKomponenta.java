@@ -37,7 +37,6 @@ public class AranzmanKomponenta implements TuristickaKomponenta {
     
     @Override
     public void dodaj(TuristickaKomponenta komponenta) {
-        // Provjerava je li to RezervacijaKomponenta
         if (komponenta instanceof RezervacijaKomponenta) {
             djeca.add(komponenta);
         } else {
@@ -65,7 +64,6 @@ public class AranzmanKomponenta implements TuristickaKomponenta {
     
     @Override
     public void prikazi() {
-        // Prikaži aranžman
         System.out.println("Aranžman: " + aranzman.getOznaka() + " - " + aranzman.getNaziv());
         System.out.println("  Datum: " + DatumParser.formatirajDatum(aranzman.getPocetniDatum()) 
             + " do " + DatumParser.formatirajDatum(aranzman.getZavrsniDatum()));

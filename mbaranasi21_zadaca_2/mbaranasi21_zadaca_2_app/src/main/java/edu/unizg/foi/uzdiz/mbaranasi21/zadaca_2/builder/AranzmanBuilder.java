@@ -106,7 +106,6 @@ public class AranzmanBuilder implements Builder {
         return this;
     }
     
- // U AranzmanBuilder.java - dodaj getere za obavezne atribute
     public String getOznaka() {
         return oznaka;
     }
