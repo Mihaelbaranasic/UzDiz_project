@@ -1,23 +1,23 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni;
 
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe.IpKomanda;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe.Komanda;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe.PstarKomanda;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.KomandaCreator;
 
 /**
- * ConcreteCreator za IP komandu.
- * Format: IP [N|S]
+ * ConcreteCreator za PSTAR komandu.
+ * Format: PSTAR oznaka
  */
-public class IpKomandaCreator extends KomandaCreator {
+public class PstarKomandaCreator extends KomandaCreator {
     
     @Override
     public Komanda kreirajKomandu(String[] argumenti) {
         if (argumenti.length < 2) {
             throw new IllegalArgumentException(
-                "IP komanda zahtijeva 1 argument: IP [N|S]");
+                "PSTAR komanda zahtijeva 1 argument: PSTAR oznaka");
         }
         
-        String redoslijed = argumenti[1];
-        return new IpKomanda(redoslijed);
+        String oznaka = argumenti[1];
+        return new PstarKomanda(oznaka);
     }
 }

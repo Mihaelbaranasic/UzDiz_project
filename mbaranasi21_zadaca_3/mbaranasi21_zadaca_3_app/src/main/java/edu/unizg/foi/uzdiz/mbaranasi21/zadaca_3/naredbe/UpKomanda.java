@@ -13,45 +13,45 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.StanjeRezervacije;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.singleton.TuristickaAgencija;
 
 /**
- * Komanda za učitavanje podataka iz CSV datoteka.
- * Koristi Facade za pristup podacima.
+ * Komanda za učitavanje podataka iz CSV datoteke.
+ * Format: UP [A|R] nazivDatoteke
+ * A - učitavanje aranžmana
+ * R - učitavanje rezervacija
  */
 public class UpKomanda implements Komanda {
     
-    private String datotekaAranzmana;
-    private String datotekaRezervacija;
+    private String tip;
+    private String datoteka;
     
-    /**
-     * Konstruktor.
-     * 
-     * @param datotekaAranzmana Putanja do CSV datoteke s aranžmanima
-     * @param datotekaRezervacija Putanja do CSV datoteke s rezervacijama
-     */
-    public UpKomanda(String datotekaAranzmana, String datotekaRezervacija) {
-        this.datotekaAranzmana = datotekaAranzmana;
-        this.datotekaRezervacija = datotekaRezervacija;
+    public UpKomanda(String tip, String datoteka) {
+        this.tip = tip;
+        this.datoteka = datoteka;
     }
     
     @Override
     public boolean izvrsi() {
+        System.out.println("UP " + tip + " " + datoteka);
+        
         TuristickaAgencija agencija = TuristickaAgencija.getInstance();
         PodaciFacade facade = new PodaciFacade();
         
-        int brojAranzmana = ucitajAranzmane(facade, agencija);
-        int brojRezervacija = ucitajRezervacije(facade, agencija);
-        
-        System.out.println("Podaci uspješno učitani:");
-        System.out.println("  - Aranžmani: " + brojAranzmana);
-        System.out.println("  - Rezervacije: " + brojRezervacija);
-        
-        return true;
+        if (tip.equalsIgnoreCase("A")) {
+            int brojUcitanih = ucitajAranzmane(facade, agencija);
+            System.out.println("Učitano " + brojUcitanih + " novih aranžmana.");
+            return true;
+        } else if (tip.equalsIgnoreCase("R")) {
+            int brojUcitanih = ucitajRezervacije(facade, agencija);
+            System.out.println("Učitano " + brojUcitanih + " novih rezervacija.");
+            return true;
+        } else {
+            System.err.println("GREŠKA: Nepoznat tip '" + tip + "'!");
+            System.err.println("Dopušteni tipovi: A (aranžmani), R (rezervacije)");
+            return false;
+        }
     }
     
-    /**
-     * Učitava aranžmane iz datoteke.
-     */
     private int ucitajAranzmane(PodaciFacade facade, TuristickaAgencija agencija) {
-        List<AranzmanDTO> aranzmaniDTO = facade.ucitajAranzmane(datotekaAranzmana);
+        List<AranzmanDTO> aranzmaniDTO = facade.ucitajAranzmane(datoteka);
         int brojUcitanih = 0;
         
         for (AranzmanDTO dto : aranzmaniDTO) {
@@ -69,11 +69,8 @@ public class UpKomanda implements Komanda {
         return brojUcitanih;
     }
     
-    /**
-     * Učitava rezervacije iz datoteke.
-     */
     private int ucitajRezervacije(PodaciFacade facade, TuristickaAgencija agencija) {
-        List<RezervacijaDTO> rezervacijeDTO = facade.ucitajRezervacije(datotekaRezervacija);
+        List<RezervacijaDTO> rezervacijeDTO = facade.ucitajRezervacije(datoteka);
         
         for (RezervacijaDTO dto : rezervacijeDTO) {
             Rezervacija rezervacija = konvertirajURezervaciju(dto);
@@ -83,9 +80,6 @@ public class UpKomanda implements Komanda {
         return rezervacijeDTO.size();
     }
     
-    /**
-     * Konvertira AranzmanDTO u Aranzman koristeći Builder.
-     */
     private Aranzman konvertirajUAranzman(AranzmanDTO dto) {
         AranzmanBuilder builder = new AranzmanBuilder(
             dto.getOznaka(), dto.getNaziv(), dto.getPocetniDatum(),
@@ -105,10 +99,6 @@ public class UpKomanda implements Komanda {
             .build();
     }
     
-    /**
-     * Konvertira RezervacijaDTO u Rezervacija.
-     * Početni status je NOVA.
-     */
     private Rezervacija konvertirajURezervaciju(RezervacijaDTO dto) {
         Osoba osoba = new Osoba(dto.getIme(), dto.getPrezime());
         return new Rezervacija(osoba, dto.getOznakaAranzmana(),
@@ -117,6 +107,6 @@ public class UpKomanda implements Komanda {
     
     @Override
     public String getOpis() {
-        return "Učitavanje podataka iz CSV datoteka";
+        return "Učitavanje podataka iz CSV datoteke";
     }
 }

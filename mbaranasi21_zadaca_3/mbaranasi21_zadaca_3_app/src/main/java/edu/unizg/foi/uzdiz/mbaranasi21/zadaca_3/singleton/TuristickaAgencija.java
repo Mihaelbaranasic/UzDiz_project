@@ -9,12 +9,19 @@ import java.util.Map;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.composite.AranzmanKomponenta;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.composite.RezervacijaKomponenta;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lib.pomocne.DatumParser;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.memento.AranzmanMemento;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.memento.MementoCuvar;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Aranzman;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Osoba;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Rezervacija;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.StanjeRezervacije;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.promatrac.AranzmanSubjekt;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.promatrac.OsobaPromatrac;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.stanje.aranzman.AranzmanStanje;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.stanje.aranzman.UPripremiAranzman;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.strategija.NullRezervacijaStrategija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.strategija.RezervacijaStrategija;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.visitor.PretrazivanjeVisitor;
 
 /**
  * Singleton klasa koja upravlja cijelim sustavom turističke agencije.
@@ -27,6 +34,8 @@ public class TuristickaAgencija {
     private Map<String, List<Rezervacija>> rezervacijePoAranzmanu;
     private Map<String, AranzmanStanje> stanjaAranzmana;
     private String kriterijSortiranja = "DATUM";
+    private RezervacijaStrategija strategija;
+    private Map<String, AranzmanSubjekt> promatraciPoAranzmanu;
     
     /**
      * Privatni konstruktor.
@@ -35,6 +44,8 @@ public class TuristickaAgencija {
         this.aranzmani = new HashMap<>();
         this.rezervacijePoAranzmanu = new HashMap<>();
         this.stanjaAranzmana = new HashMap<>();
+        this.strategija = new NullRezervacijaStrategija();
+        this.promatraciPoAranzmanu = new HashMap<>();
     }
     
     /**
@@ -49,6 +60,37 @@ public class TuristickaAgencija {
             }
         }
         return instanca;
+    }
+    
+    /**
+     * Postavlja strategiju upravljanja rezervacijama.
+     * 
+     * @param strategija Nova strategija
+     */
+    public void postaviStrategiju(RezervacijaStrategija strategija) {
+        this.strategija = strategija;
+    }
+
+    /**
+     * Dohvaća trenutnu strategiju.
+     * 
+     * @return Trenutna strategija
+     */
+    public RezervacijaStrategija getStrategija() {
+        return this.strategija;
+    }
+
+    /**
+     * Dohvaća sve rezervacije iz sustava.
+     * 
+     * @return Lista svih rezervacija
+     */
+    public List<Rezervacija> dohvatiSveRezervacije() {
+        List<Rezervacija> sve = new ArrayList<>();
+        for (List<Rezervacija> lista : rezervacijePoAranzmanu.values()) {
+            sve.addAll(lista);
+        }
+        return sve;
     }
     
     
@@ -112,20 +154,30 @@ public class TuristickaAgencija {
     /**
      * Dodaje rezervaciju u sustav.
      */
-    public void dodajRezervaciju(Rezervacija rezervacija) {
+    public boolean dodajRezervaciju(Rezervacija rezervacija) {
         String oznaka = rezervacija.getOznakaAranzmana();
         
         if (!aranzmani.containsKey(oznaka)) {
             ispisiGreskuRezervacije(rezervacija, 
                 "aranžman " + oznaka + " ne postoji");
-            return;
+            return false;
         }
         
         AranzmanStanje stanje = dohvatiStanjeAranzmana(oznaka);
         if (stanje != null && stanje.getNazivStanja().equals("OTKAZAN")) {
             ispisiGreskuRezervacije(rezervacija, 
                 "aranžman " + oznaka + " je otkazan");
-            return;
+            return false;
+        }
+        
+        Aranzman aranzman = dohvatiAranzman(oznaka);
+        List<Rezervacija> sveRezervacije = dohvatiSveRezervacije();
+        
+        if (!strategija.dozvoliRezervaciju(rezervacija.getOsoba(), aranzman, 
+                                           sveRezervacije)) {
+            rezervacija.odgodi();
+            ispisiGreskuRezervacije(rezervacija, 
+                "ograničenje strategije: " + strategija.getNaziv());
         }
         
         if (!rezervacijePoAranzmanu.containsKey(oznaka)) {
@@ -135,6 +187,9 @@ public class TuristickaAgencija {
         rezervacijePoAranzmanu.get(oznaka).add(rezervacija);
         azurirajStanjaRezervacija(oznaka);
         azurirajStanjeAranzmana(oznaka);
+        obavijesti(oznaka, "Dodana nova rezervacija");
+        
+        return true;
     }
     
     /**
@@ -158,8 +213,13 @@ public class TuristickaAgencija {
         Rezervacija rezervacija = new Rezervacija(
             osoba, oznakaAranzmana, datumVrijeme, StanjeRezervacije.NOVA);
         
-        dodajRezervaciju(rezervacija);
-        return true;
+        boolean uspjeh = dodajRezervaciju(rezervacija);
+        
+        if (uspjeh) {
+            obavijesti(oznakaAranzmana, "Nova rezervacija: " + osoba.getIme() + " " + osoba.getPrezime());
+        }
+        
+        return uspjeh;
     }
     
     /**
@@ -206,6 +266,7 @@ public class TuristickaAgencija {
         
         azurirajStanjaRezervacija(oznakaAranzmana);
         azurirajStanjeAranzmana(oznakaAranzmana);
+        obavijesti(oznakaAranzmana, "Otkazana rezervacija: " + ime + " " + prezime);
         
         return true;
     }
@@ -377,8 +438,7 @@ public class TuristickaAgencija {
     /**
      * Određuje konačne statuse rezervacija.
      */
-    private void odrediKonacneStatuse(List<Rezervacija> rezervacije, 
-            Aranzman aranzman) {
+    private void odrediKonacneStatuse(List<Rezervacija> rezervacije, Aranzman aranzman) {
         int maxPutnika = aranzman.getMaksBrojPutnika();
         int brojAktivnih = 0;
         Map<String, Boolean> osobaImaAktivu = new HashMap<>();
@@ -388,15 +448,20 @@ public class TuristickaAgencija {
             
             if (osobaVecImaAktivu(osobaImaAktivu, kljucOsobe)) {
                 rez.odgodi();
-                ispisiGreskuRezervacije(rez, 
-                    "korisnik već ima aktivnu rezervaciju");
+                if (!rez.isObradjenaGreska()) {
+                    ispisiGreskuRezervacije(rez, "korisnik već ima aktivnu rezervaciju");
+                    rez.setObradjenaGreska(true);
+                }
                 continue;
             }
             
             if (imaPreklop(rez.getOsoba(), aranzman)) {
                 rez.odgodi();
-                ispisiGreskuRezervacije(rez, 
-                    "korisnik ima aktivnu rezervaciju na aranžmanu koji se preklapa");
+                if (!rez.isObradjenaGreska()) {
+                    ispisiGreskuRezervacije(rez, 
+                        "korisnik ima aktivnu rezervaciju na aranžmanu koji se preklapa");
+                    rez.setObradjenaGreska(true);
+                }
                 continue;
             }
             
@@ -572,5 +637,219 @@ public class TuristickaAgencija {
         System.err.println("GREŠKA: Rezervacija korisnika " + ime + " " 
             + prezime + " za aranžman " + oznakaAranzmana 
             + " ne postoji ili je već otkazana.");
+    }
+    
+    /**
+     * Dohvaća ili kreira Subject za aranžman.
+     */
+    private AranzmanSubjekt dohvatiSubjekt(String oznakaAranzmana) {
+        if (!promatraciPoAranzmanu.containsKey(oznakaAranzmana)) {
+            promatraciPoAranzmanu.put(oznakaAranzmana, new AranzmanSubjekt(oznakaAranzmana));
+        }
+        return promatraciPoAranzmanu.get(oznakaAranzmana);
+    }
+
+    /**
+     * Prijavljuje promatrača za aranžman.
+     */
+    public boolean prijaviPromatraca(String ime, String prezime, String oznakaAranzmana) {
+        if (!aranzmani.containsKey(oznakaAranzmana)) {
+            System.err.println("GREŠKA: Aranžman " + oznakaAranzmana + " ne postoji!");
+            return false;
+        }
+        
+        Osoba osoba = new Osoba(ime, prezime);
+        OsobaPromatrac promatrac = new OsobaPromatrac(osoba, oznakaAranzmana);
+        
+        AranzmanSubjekt subjekt = dohvatiSubjekt(oznakaAranzmana);
+        subjekt.prijaviPromatraca(promatrac);
+        
+        System.out.println("Osoba " + ime + " " + prezime 
+            + " pretplaćena na obavijesti za aranžman " + oznakaAranzmana);
+        return true;
+    }
+
+    /**
+     * Odjavljuje promatrača za aranžman.
+     */
+    public boolean odjaviPromatraca(String ime, String prezime, String oznakaAranzmana) {
+        if (!aranzmani.containsKey(oznakaAranzmana)) {
+            System.err.println("GREŠKA: Aranžman " + oznakaAranzmana + " ne postoji!");
+            return false;
+        }
+        
+        if (!promatraciPoAranzmanu.containsKey(oznakaAranzmana)) {
+            System.err.println("GREŠKA: Nema pretplata za aranžman " + oznakaAranzmana);
+            return false;
+        }
+        
+        Osoba osoba = new Osoba(ime, prezime);
+        OsobaPromatrac promatrac = new OsobaPromatrac(osoba, oznakaAranzmana);
+        
+        AranzmanSubjekt subjekt = promatraciPoAranzmanu.get(oznakaAranzmana);
+        subjekt.odjaviPromatraca(promatrac);
+        
+        System.out.println("Osoba " + ime + " " + prezime 
+            + " odjavljena s obavijesti za aranžman " + oznakaAranzmana);
+        return true;
+    }
+
+    /**
+     * Odjavljuje sve promatrače za aranžman.
+     */
+    public boolean odjaviSvePromatraceZaAranzman(String oznakaAranzmana) {
+        if (!aranzmani.containsKey(oznakaAranzmana)) {
+            System.err.println("GREŠKA: Aranžman " + oznakaAranzmana + " ne postoji!");
+            return false;
+        }
+        
+        if (promatraciPoAranzmanu.containsKey(oznakaAranzmana)) {
+            AranzmanSubjekt subjekt = promatraciPoAranzmanu.get(oznakaAranzmana);
+            subjekt.ocistiPromatrace();
+        }
+        
+        System.out.println("Sve pretplate za aranžman " + oznakaAranzmana + " su uklonjene.");
+        return true;
+    }
+
+    /**
+     * Obavještava promatrače o promjeni na aranžmanu.
+     */
+    public void obavijesti(String oznakaAranzmana, String poruka) {
+        if (!promatraciPoAranzmanu.containsKey(oznakaAranzmana)) {
+            return;
+        }
+        
+        AranzmanSubjekt subjekt = promatraciPoAranzmanu.get(oznakaAranzmana);
+        subjekt.obavijesti(poruka);
+    }
+    
+    public void obrisiSveAranzmane() {
+        aranzmani.clear();
+        rezervacijePoAranzmanu.clear();
+        stanjaAranzmana.clear();
+        promatraciPoAranzmanu.clear();
+    }
+    
+    public void obrisiSveRezervacije() {
+        for (String oznaka : rezervacijePoAranzmanu.keySet()) {
+            rezervacijePoAranzmanu.get(oznaka).clear();
+        }
+        azurirajSvaStanjaAranzmana();
+    }
+    
+    private void azurirajSvaStanjaAranzmana() {
+        for (String oznaka : aranzmani.keySet()) {
+            azurirajStanjeAranzmana(oznaka);
+        }
+    }
+    
+    private String redoslijedIspisa = "NORMALNI";
+    
+    public void postaviRedoslijedIspisa(String redoslijed) {
+        this.redoslijedIspisa = redoslijed;
+    }
+    
+    public String dohvatiRedoslijedIspisa() {
+        return redoslijedIspisa;
+    }
+    public boolean spremiStanjeAranzmana(String oznakaAranzmana) {
+        Aranzman aranzman = dohvatiAranzman(oznakaAranzmana);
+        if (aranzman == null) {
+            System.err.println("GREŠKA: Aranžman " + oznakaAranzmana + " ne postoji!");
+            return false;
+        }
+        
+        List<Rezervacija> rezervacije = dohvatiRezervacije(oznakaAranzmana);
+        AranzmanStanje stanje = dohvatiStanjeAranzmana(oznakaAranzmana);
+        
+        AranzmanMemento memento = new AranzmanMemento(aranzman, rezervacije, stanje);
+        MementoCuvar cuvar = MementoCuvar.getInstance();
+        cuvar.spremiStanje(oznakaAranzmana, memento);
+        
+        int brojSpremljenih = cuvar.dohvatiBrojSpremljenihStanja(oznakaAranzmana);
+        System.out.println("Stanje aranžmana " + oznakaAranzmana 
+            + " uspješno spremljeno (verzija #" + brojSpremljenih + ")");
+        
+        return true;
+    }
+    
+    public boolean vratiStanjeAranzmana(String oznakaAranzmana) {
+        MementoCuvar cuvar = MementoCuvar.getInstance();
+        AranzmanMemento memento = cuvar.vratiZadnjeStanje(oznakaAranzmana);
+        
+        if (memento == null) {
+            System.err.println("GREŠKA: Nema spremljenog stanja za aranžman " 
+                + oznakaAranzmana + "!");
+            return false;
+        }
+        
+        Aranzman aranzman = memento.getAranzman();
+        List<Rezervacija> rezervacije = memento.getRezervacije();
+        AranzmanStanje stanje = memento.getStanje();
+        
+        aranzmani.put(oznakaAranzmana, aranzman);
+        rezervacijePoAranzmanu.put(oznakaAranzmana, rezervacije);
+        stanjaAranzmana.put(oznakaAranzmana, stanje);
+        
+        int preostaloStanja = cuvar.dohvatiBrojSpremljenihStanja(oznakaAranzmana);
+        System.out.println("Stanje aranžmana " + oznakaAranzmana 
+            + " uspješno vraćeno (preostalo verzija: " + preostaloStanja + ")");
+        
+        return true;
+    }
+    public List<String> pretraziAranzmane(String kljucnaRijec) {
+        PretrazivanjeVisitor visitor = new PretrazivanjeVisitor(kljucnaRijec, true);
+        
+        for (String oznaka : aranzmani.keySet()) {
+            AranzmanKomponenta komponenta = kreirajCompositeStrukturuAranzmana(oznaka);
+            if (komponenta != null) {
+                komponenta.prihvati(visitor);
+            }
+        }
+        
+        return visitor.dohvatiRezultateAranzmani();
+    }
+    
+    public List<String> pretraziRezervacije(String kljucnaRijec) {
+        PretrazivanjeVisitor visitor = new PretrazivanjeVisitor(kljucnaRijec, false);
+        
+        for (String oznaka : aranzmani.keySet()) {
+            AranzmanKomponenta komponenta = kreirajCompositeStrukturuAranzmana(oznaka);
+            if (komponenta != null) {
+                komponenta.prihvati(visitor);
+            }
+        }
+        
+        return visitor.dohvatiRezultateRezervacije();
+    }
+    public List<Aranzman> primiijeniRedoslijedAranzmani(List<Aranzman> lista) {
+        if (redoslijedIspisa.equals("OBRNUTI")) {
+            return obrnutaListaAranzmani(lista);
+        }
+        return lista;
+    }
+    
+    private List<Aranzman> obrnutaListaAranzmani(List<Aranzman> originalna) {
+        List<Aranzman> obrnuta = new ArrayList<>();
+        for (int i = originalna.size() - 1; i >= 0; i--) {
+            obrnuta.add(originalna.get(i));
+        }
+        return obrnuta;
+    }
+    
+    public List<Rezervacija> primiijeniRedoslijedRezervacije(List<Rezervacija> lista) {
+        if (redoslijedIspisa.equals("OBRNUTI")) {
+            return obrnutaListaRezervacije(lista);
+        }
+        return lista;
+    }
+    
+    private List<Rezervacija> obrnutaListaRezervacije(List<Rezervacija> originalna) {
+        List<Rezervacija> obrnuta = new ArrayList<>();
+        for (int i = originalna.size() - 1; i >= 0; i--) {
+            obrnuta.add(originalna.get(i));
+        }
+        return obrnuta;
     }
 }

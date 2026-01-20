@@ -8,26 +8,16 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Aranzman;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Rezervacija;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.singleton.TuristickaAgencija;
 
-/**
- * Komanda za ispis rezervacija za turistički aranžman.
- * Podržava filtriranje po statusima.
- */
 public class IrtaKomanda implements Komanda {
     
     private String oznakaAranzmana;
     private String filter;
     
-    /**
-     * Konstruktor bez filtera.
-     */
     public IrtaKomanda(String oznakaAranzmana) {
         this.oznakaAranzmana = oznakaAranzmana;
         this.filter = null;
     }
     
-    /**
-     * Konstruktor s filterom.
-     */
     public IrtaKomanda(String oznakaAranzmana, String filter) {
         this.oznakaAranzmana = oznakaAranzmana;
         this.filter = filter;
@@ -50,24 +40,16 @@ public class IrtaKomanda implements Komanda {
         return true;
     }
     
-    /**
-     * Filtrira rezervacije prema filteru.
-     */
     private List<Rezervacija> filtrirajRezervacije(List<Rezervacija> rezervacije) {
         if (filter == null || filter.isEmpty()) {
             return rezervacije;
         }
         
-        // Parsiraj filter - provjerava koje oznake su prisutne
         boolean primljenePrimljene = filter.contains("P");
         boolean aktivneAktivne = filter.contains("A");
         boolean cekanjeCekanje = filter.contains("Č") || filter.contains("C");
         boolean otkazaneOtkazane = filter.contains("O") && !filter.contains("OD");
         boolean odgodeneOdgodene = filter.contains("OD");
-        
-        // Ako je samo "O" bez "OD", onda je otkazane
-        // Ako je "OD", onda je odgođene
-        // Ako je "OOD" ili "ODO", onda je otkazane + odgođene
         
         List<Rezervacija> rezultat = new ArrayList<>();
         
@@ -98,9 +80,6 @@ public class IrtaKomanda implements Komanda {
         return rezultat;
     }
     
-    /**
-     * Ispisuje rezervacije u tabličnom formatu.
-     */
     private void ispisiRezervacije(Aranzman aranzman, List<Rezervacija> rezervacije) {
         System.out.println("═══════════════════════════════════════════════════════");
         System.out.println("  REZERVACIJE ZA ARANŽMAN: " + aranzman.getOznaka());
@@ -112,6 +91,9 @@ public class IrtaKomanda implements Komanda {
             return;
         }
         
+        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+        rezervacije = agencija.primiijeniRedoslijedRezervacije(rezervacije);
+        
         ispisiHeader();
         ispisiLiniju();
         
@@ -120,25 +102,16 @@ public class IrtaKomanda implements Komanda {
         }
     }
     
-    /**
-     * Ispisuje zaglavlje tablice.
-     */
     private void ispisiHeader() {
         System.out.printf("%-20s %-20s %-20s %-12s%n",
             "Ime", "Prezime", "Datum prijema", "Stanje");
     }
     
-    /**
-     * Ispisuje liniju razdvajanja.
-     */
     private void ispisiLiniju() {
         System.out.println("─────────────────────────────────────────────────────"
             + "───────────────");
     }
     
-    /**
-     * Ispisuje jedan redak tablice.
-     */
     private void ispisiRedak(Rezervacija r) {
         System.out.printf("%-20s %-20s %-20s %-12s%n",
             r.getOsoba().getIme(),

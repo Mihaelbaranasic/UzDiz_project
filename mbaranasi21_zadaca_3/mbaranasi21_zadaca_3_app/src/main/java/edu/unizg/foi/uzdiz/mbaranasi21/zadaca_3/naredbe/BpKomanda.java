@@ -3,22 +3,42 @@ package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.singleton.TuristickaAgencija;
 
 /**
- * Komanda za brisanje svih podataka iz sustava.
- * Resetira TuristickaAgencija Singleton.
+ * Komanda za brisanje podataka o aranžmanima ili rezervacijama.
+ * Format: BP [A|R]
+ * A - brisanje svih aranžmana (i njihovih rezervacija)
+ * R - brisanje svih rezervacija
  */
 public class BpKomanda implements Komanda {
-    
+
+    private String tip;
+
+    public BpKomanda(String tip) {
+        this.tip = tip;
+    }
+
     @Override
     public boolean izvrsi() {
-        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
-        agencija.resetiraj();
+        System.out.println("BP " + tip);
         
-        System.out.println("Svi podaci uspješno obrisani.");
-        return true;
+        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+        
+        if (tip.equalsIgnoreCase("A")) {
+            agencija.obrisiSveAranzmane();
+            System.out.println("Svi aranžmani (i njihove rezervacije) uspješno obrisani.");
+            return true;
+        } else if (tip.equalsIgnoreCase("R")) {
+            agencija.obrisiSveRezervacije();
+            System.out.println("Sve rezervacije uspješno obrisane.");
+            return true;
+        } else {
+            System.err.println("GREŠKA: Nepoznat tip '" + tip + "'!");
+            System.err.println("Dopušteni tipovi: A (aranžmani), R (rezervacije)");
+            return false;
+        }
     }
-    
+
     @Override
     public String getOpis() {
-        return "Brisanje svih podataka iz sustava";
+        return "Brisanje podataka o aranžmanima ili rezervacijama";
     }
 }

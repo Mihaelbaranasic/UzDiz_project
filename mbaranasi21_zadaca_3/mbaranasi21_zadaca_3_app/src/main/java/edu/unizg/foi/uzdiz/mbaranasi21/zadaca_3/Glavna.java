@@ -1,11 +1,15 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.builder.AranzmanBuilder;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lanac.ApstraktniArgumentHandler;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lanac.JdrArgumentHandler;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lanac.KonfiguracijaAplikacije;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lanac.RtaArgumentHandler;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lanac.TaArgumentHandler;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lanac.VdrArgumentHandler;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lib.dto.AranzmanDTO;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lib.dto.RezervacijaDTO;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.lib.facade.PodaciFacade;
@@ -17,55 +21,45 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.singleton.TuristickaAgencija;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.KomandaCreator;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.KomandaFactory;
 
-/**
- * Glavna klasa aplikacije za upravljanje turističkom agencijom.
- * Entry point programa - parsira argumente i pokreće sustav.
- */
 public class Glavna {
 
     public static void main(String[] args) {
-        Map<String, String> argumenti = parsirajArgumente(args);
+        KonfiguracijaAplikacije config = parsirajArgumente(args);
 
-        if (!provjeriArgumente(argumenti)) {
+        if (!config.jeValjan()) {
+            System.err.println("GREŠKA: Nedostaju obavezni argumenti!");
+            System.err.println("Korištenje: --ta <datoteka> --rta <datoteka> [--jdr|--vdr]");
             System.exit(1);
         }
 
-        String datotekaAranzmana = argumenti.get("--ta");
-        String datotekaRezervacija = argumenti.get("--rta");
+        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+        agencija.postaviStrategiju(config.getStrategija());
 
-        ucitajPodatke(datotekaAranzmana, datotekaRezervacija);
+        ucitajPodatke(config.getDatotekaAranzmani(), config.getDatotekaRezervacije());
         pokreniInteraktivniMod();
     }
 
-    private static Map<String, String> parsirajArgumente(String[] args) {
-        Map<String, String> mapa = new HashMap<>();
+    private static KonfiguracijaAplikacije parsirajArgumente(String[] args) {
+        ApstraktniArgumentHandler taHandler = new TaArgumentHandler();
+        ApstraktniArgumentHandler rtaHandler = new RtaArgumentHandler();
+        ApstraktniArgumentHandler jdrHandler = new JdrArgumentHandler();
+        ApstraktniArgumentHandler vdrHandler = new VdrArgumentHandler();
 
-        for (int i = 0; i < args.length - 1; i++) {
+        taHandler.postaviSljedbenika(rtaHandler);
+        rtaHandler.postaviSljedbenika(jdrHandler);
+        jdrHandler.postaviSljedbenika(vdrHandler);
+
+        KonfiguracijaAplikacije config = new KonfiguracijaAplikacije();
+
+        for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("--")) {
-                mapa.put(args[i], args[i + 1]);
+                taHandler.obradiArgument(args, i, config);
             }
         }
 
-        return mapa;
+        return config;
     }
 
-    private static boolean provjeriArgumente(Map<String, String> argumenti) {
-        if (!argumenti.containsKey("--ta")) {
-            System.err.println("GREŠKA: Nedostaje --ta (aranžmani)!");
-            return false;
-        }
-
-        if (!argumenti.containsKey("--rta")) {
-            System.err.println("GREŠKA: Nedostaje --rta (rezervacije)!");
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Učitava podatke iz datoteka.
-     */
     private static void ucitajPodatke(String datotekaAranzmana, String datotekaRezervacija) {
         TuristickaAgencija agencija = TuristickaAgencija.getInstance();
         PodaciFacade facade = new PodaciFacade();
@@ -109,10 +103,6 @@ public class Glavna {
             .build();
     }
 
-    /**
-     * Konvertira RezervacijaDTO u Rezervacija domain objekt.
-     * Početni status je NOVA.
-     */
     private static Rezervacija konvertirajURezervaciju(RezervacijaDTO dto) {
         Osoba osoba = new Osoba(dto.getIme(), dto.getPrezime());
         return new Rezervacija(
@@ -144,9 +134,6 @@ public class Glavna {
         scanner.close();
     }
 
-    /**
-     * Obrađuje unesenu naredbu koristeći Factory Method pattern.
-     */
     private static void obradiNaredbu(String naredba) {
         String[] dijelovi = naredba.split("\\s+");
         String nazivKomande = dijelovi[0].toUpperCase();
@@ -158,6 +145,12 @@ public class Glavna {
             return;
         }
 
-        creator.izvrsiKomandu(dijelovi);
+        try {
+            creator.izvrsiKomandu(dijelovi);
+        } catch (IllegalArgumentException e) {
+            System.err.println("GREŠKA: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("GREŠKA prilikom izvršavanja naredbe: " + e.getMessage());
+        }
     }
 }

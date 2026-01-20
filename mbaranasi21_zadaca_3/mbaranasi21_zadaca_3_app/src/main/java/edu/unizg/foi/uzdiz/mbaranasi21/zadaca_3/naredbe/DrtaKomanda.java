@@ -3,13 +3,8 @@ package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe;
 import java.time.LocalDateTime;
 
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Osoba;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Rezervacija;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.StanjeRezervacije;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.singleton.TuristickaAgencija;
 
-/**
- * Komanda za dodavanje rezervacije.
- */
 public class DrtaKomanda implements Komanda {
     
     private String ime;
@@ -28,9 +23,6 @@ public class DrtaKomanda implements Komanda {
     public boolean izvrsi() {
         Osoba osoba = new Osoba(ime, prezime);
         TuristickaAgencija agencija = TuristickaAgencija.getInstance();
-        
-        Rezervacija novaRezervacija = new Rezervacija(
-            osoba, oznaka, datumVrijeme, StanjeRezervacije.NOVA);
         
         boolean uspjeh = agencija.dodajNovuRezervaciju(osoba, oznaka, datumVrijeme);
         

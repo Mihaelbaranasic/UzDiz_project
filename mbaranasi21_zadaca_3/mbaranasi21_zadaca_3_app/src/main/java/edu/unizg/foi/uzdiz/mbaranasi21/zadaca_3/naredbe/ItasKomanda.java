@@ -1,23 +1,16 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe;
 
+import java.util.List;
+
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.composite.AranzmanKomponenta;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Aranzman;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.singleton.TuristickaAgencija;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.visitor.StatistikaVisitor;
 
-/**
- * Komanda za ispis statistike aranžmana.
- * Koristi Visitor pattern za prikupljanje podataka.
- */
 public class ItasKomanda implements Komanda {
     
     private String oznakaAranzmana;
     
-    /**
-     * Konstruktor.
-     * 
-     * @param oznakaAranzmana Oznaka aranžmana (null za sve aranžmane)
-     */
     public ItasKomanda(String oznakaAranzmana) {
         this.oznakaAranzmana = oznakaAranzmana;
     }
@@ -33,9 +26,6 @@ public class ItasKomanda implements Komanda {
         }
     }
     
-    /**
-     * Ispisuje statistiku jednog aranžmana.
-     */
     private boolean ispisiStatistikuJednogAranzmana(TuristickaAgencija agencija) {
         AranzmanKomponenta komponenta = 
             agencija.kreirajCompositeStrukturuAranzmana(oznakaAranzmana);
@@ -55,15 +45,16 @@ public class ItasKomanda implements Komanda {
         return true;
     }
     
-    /**
-     * Ispisuje statistiku svih aranžmana.
-     */
     private boolean ispisiStatistikuSvihAranzmana(TuristickaAgencija agencija) {
         StatistikaVisitor visitor = new StatistikaVisitor();
         
-        for (String oznaka : agencija.dohvatiSveOznakeAranzmana()) {
+        List<String> oznake = agencija.dohvatiSveOznakeAranzmana();
+        List<Aranzman> aranzmani = agencija.dohvatiSveAranzmane();
+        aranzmani = agencija.primiijeniRedoslijedAranzmani(aranzmani);
+        
+        for (Aranzman aranzman : aranzmani) {
             AranzmanKomponenta komponenta = 
-                agencija.kreirajCompositeStrukturuAranzmana(oznaka);
+                agencija.kreirajCompositeStrukturuAranzmana(aranzman.getOznaka());
             
             if (komponenta != null) {
                 komponenta.prihvati(visitor);

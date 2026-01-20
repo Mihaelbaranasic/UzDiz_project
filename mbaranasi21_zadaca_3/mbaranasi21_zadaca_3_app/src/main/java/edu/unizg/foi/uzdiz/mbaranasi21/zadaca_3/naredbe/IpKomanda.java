@@ -4,45 +4,39 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.singleton.TuristickaAgencija;
 
 /**
  * Komanda za postavljanje redoslijeda ispisa.
- * Definira kriterij sortiranja rezultata.
+ * Format: IP [N|S]
+ * N - kronološki redoslijed (stari -> novi)
+ * S - obrnuti kronološki redoslijed (novi -> stari)
  */
 public class IpKomanda implements Komanda {
-    
-    private String kriterij;
-    
-    /**
-     * Konstruktor.
-     * 
-     * @param kriterij Kriterij sortiranja (A-abeceda, D-datum, C-cijena)
-     */
-    public IpKomanda(String kriterij) {
-        this.kriterij = kriterij;
+
+    private String redoslijed;
+
+    public IpKomanda(String redoslijed) {
+        this.redoslijed = redoslijed;
     }
-    
+
     @Override
     public boolean izvrsi() {
+        System.out.println("IP " + redoslijed);
+        
         TuristickaAgencija agencija = TuristickaAgencija.getInstance();
         
-        String kriterijUpper = kriterij.toUpperCase();
-        
-        if (kriterijUpper.equals("A")) {
-            agencija.postaviKriterijSortiranja("ABECEDA");
-            System.out.println("Redoslijed ispisa postavljen na: Abecedni");
-        } else if (kriterijUpper.equals("D")) {
-            agencija.postaviKriterijSortiranja("DATUM");
-            System.out.println("Redoslijed ispisa postavljen na: Datum");
-        } else if (kriterijUpper.equals("C")) {
-            agencija.postaviKriterijSortiranja("CIJENA");
-            System.out.println("Redoslijed ispisa postavljen na: Cijena");
+        if (redoslijed.equalsIgnoreCase("N")) {
+            agencija.postaviRedoslijedIspisa("NORMALNI");
+            System.out.println("Redoslijed ispisa postavljen na: Kronološki (stari -> novi)");
+            return true;
+        } else if (redoslijed.equalsIgnoreCase("S")) {
+            agencija.postaviRedoslijedIspisa("OBRNUTI");
+            System.out.println("Redoslijed ispisa postavljen na: Obrnuti kronološki (novi -> stari)");
+            return true;
         } else {
-            System.err.println("GREŠKA: Nepoznat kriterij '" + kriterij + "'!");
-            System.err.println("Dopušteni kriteriji: A (abeceda), D (datum), C (cijena)");
+            System.err.println("GREŠKA: Nepoznat redoslijed '" + redoslijed + "'!");
+            System.err.println("Dopušteni redoslijedi: N (normalni), S (obrnuti)");
             return false;
         }
-        
-        return true;
     }
-    
+
     @Override
     public String getOpis() {
         return "Postavljanje redoslijeda ispisa";

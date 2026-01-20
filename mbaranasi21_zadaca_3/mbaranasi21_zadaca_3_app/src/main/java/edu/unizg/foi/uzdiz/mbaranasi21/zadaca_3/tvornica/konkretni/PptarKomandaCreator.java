@@ -1,25 +1,25 @@
 package edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni;
 
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe.Komanda;
-import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe.UpKomanda;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.naredbe.PptarKomanda;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.KomandaCreator;
 
 /**
- * ConcreteCreator za UP komandu.
- * Format: UP [A|R] nazivDatoteke
+ * ConcreteCreator za PPTAR komandu.
+ * Format: PPTAR [A|R] riječ
  */
-public class UpKomandaCreator extends KomandaCreator {
+public class PptarKomandaCreator extends KomandaCreator {
     
     @Override
     public Komanda kreirajKomandu(String[] argumenti) {
         if (argumenti.length < 3) {
             throw new IllegalArgumentException(
-                "UP komanda zahtijeva 2 argumenta: UP [A|R] nazivDatoteke");
+                "PPTAR komanda zahtijeva 2 argumenta: PPTAR [A|R] riječ");
         }
         
         String tip = argumenti[1];
-        String datoteka = argumenti[2];
+        String kljucnaRijec = argumenti[2];
         
-        return new UpKomanda(tip, datoteka);
+        return new PptarKomanda(tip, kljucnaRijec);
     }
 }

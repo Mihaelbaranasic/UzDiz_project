@@ -15,7 +15,12 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.ItapKomandaCr
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.ItasKomandaCreator;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.OrtaKomandaCreator;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.OtaKomandaCreator;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.PptarKomandaCreator;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.PstarKomandaCreator;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.PtarKomandaCreator;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.UpKomandaCreator;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.UptarKomandaCreator;
+import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.tvornica.konkretni.VstarKomandaCreator;
 
 /**
  * Factory klasa koja mapira komande na njihove Creator objekte.
@@ -38,6 +43,11 @@ public class KomandaFactory {
         CREATORI.put("UP", new UpKomandaCreator());
         CREATORI.put("BP", new BpKomandaCreator());
         CREATORI.put("IP", new IpKomandaCreator());
+        CREATORI.put("PTAR", new PtarKomandaCreator());
+        CREATORI.put("UPTAR", new UptarKomandaCreator());
+        CREATORI.put("PSTAR", new PstarKomandaCreator());
+        CREATORI.put("VSTAR", new VstarKomandaCreator());
+        CREATORI.put("PPTAR", new PptarKomandaCreator());
     }
     
     /**

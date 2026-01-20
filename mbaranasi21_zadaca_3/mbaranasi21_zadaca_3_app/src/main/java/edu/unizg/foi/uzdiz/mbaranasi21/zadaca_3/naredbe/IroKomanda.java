@@ -7,9 +7,6 @@ import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Aranzman;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.model.Rezervacija;
 import edu.unizg.foi.uzdiz.mbaranasi21.zadaca_3.singleton.TuristickaAgencija;
 
-/**
- * Komanda za ispis rezervacija osobe.
- */
 public class IroKomanda implements Komanda {
     
     private String ime;
@@ -30,6 +27,8 @@ public class IroKomanda implements Komanda {
             return true;
         }
         
+        rezervacije = agencija.primiijeniRedoslijedRezervacije(rezervacije);
+        
         System.out.printf("%-20s %-10s %-30s %-12s%n", 
             "Datum i vrijeme", "Oznaka", "Naziv aranžmana", "Vrsta");
         System.out.println(String.format("%0" + 72 + "d", 0).replace("0", "-"));
@@ -41,7 +40,7 @@ public class IroKomanda implements Komanda {
             
             System.out.printf("%-20s %-10s %-30s %-12s%n",
                 DatumParser.formatirajDatumVrijeme(r.getDatumVrijemePrijema()),
-                r.getOznakaAranzmana(), naziv, r.getStanje().getOznaka());
+                r.getOznakaAranzmana(), naziv, r.getStanje().name());
         }
         
         return true;

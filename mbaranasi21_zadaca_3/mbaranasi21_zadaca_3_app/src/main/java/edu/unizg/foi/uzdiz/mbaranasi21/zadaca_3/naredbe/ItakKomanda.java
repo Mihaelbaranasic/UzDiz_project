@@ -48,7 +48,8 @@ public class ItakKomanda implements Komanda {
      */
     private List<Aranzman> filtrirajPoDatamu(List<Aranzman> aranzmani) {
         if (datumOd == null && datumDo == null) {
-            return aranzmani;
+            TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+            return agencija.primiijeniRedoslijedAranzmani(aranzmani);
         }
         
         List<Aranzman> rezultat = new java.util.ArrayList<>();
@@ -59,7 +60,8 @@ public class ItakKomanda implements Komanda {
             }
         }
         
-        return rezultat;
+        TuristickaAgencija agencija = TuristickaAgencija.getInstance();
+        return agencija.primiijeniRedoslijedAranzmani(rezultat);
     }
     
     /**
